@@ -1,0 +1,28 @@
+digraph local_cloud_fallback {
+    rankdir=TB;
+    node [fontname="Helvetica", fontsize=12];
+
+    A [label="Agent request", shape=ellipse];
+    B [label="Probe local endpoint\nhttp://localhost:port/health", shape=diamond];
+    C [label="Route to local model\nllama.cpp / Ollama / vLLM", shape=box, style=filled, fillcolor="#0d3321", color="#27ae60", fontcolor="#e0e0e0"];
+    D [label="Fallback enabled?", shape=diamond];
+    Z [label="Return error", shape=box, style=filled, fillcolor="#2d0d0d", color="#e74c3c", fontcolor="#e0e0e0"];
+    E [label="Select cloud API", shape=diamond];
+    F [label="DeepSeek V3\nor Kimi K2.5", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    G [label="DeepSeek R1\nor Kimi K2.5", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    H [label="Mistral Small 3.2\nor GLM-4.5 Airx", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    R [label="Return response", shape=ellipse];
+
+    A -> B;
+    B -> C [label="Responds in time"];
+    B -> D [label="Timeout or error"];
+    D -> E [label="Yes"];
+    D -> Z [label="No"];
+    E -> F [label="Coding / agents"];
+    E -> G [label="Reasoning / math"];
+    E -> H [label="Cost-sensitive"];
+    C -> R;
+    F -> R;
+    G -> R;
+    H -> R;
+}

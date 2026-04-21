@@ -6,6 +6,9 @@ ROCm (Radeon Open Compute) is AMD's GPU compute platform, equivalent to NVIDIA C
 
 ## GPU Support Matrix
 
+![AMD ROCm Backend Compatibility — Hardware Schematic](../diagrams/blueprint/rocm_backend_blueprint.png)
+*[view / edit source](https://mermaid.live/edit#pako:jdJNb4IwAAbgv9LUy5bprGXA7GGJil+JbotxCQl4aEqZxCKmwnYw/veVUoh6WKQX+vZ9KKScIMsiDgmMRfbLtlTmYO2Fe6CuwUMwWHpg+vm1eQSdzhsYngaSbZOcs7yQ/Bzuq95QL46Ckfc+sJ7CcL+cWwj5oAvUDbb9KrHrxLb9zSX0NMS6hesW7qGr0jhYlU9XpZUP3D5CwF+XTX9tolcVdYHr6pUrOtEUVz2nr3uOqpvArQKnhhUdaToNQvizWCxBWGC3ZwEgBE3pMzscmuRDR2YaQrOzp/nsgjsU3c/Hms+vdnfv55OK198yJYTEhRDVbKZmB3XMCTXBXAUiSdWxRrVggh6PHo9ByUCcCEFaKLIs3Gsfc5ntOGlhl3IHtVkmMklaHJXjBptdjMeROlPU+Njqsx7+15uXajxSo/HcfWEWu/WwDVMuU5pEkJxgvuVp+WtHVO7guQ2LQ0Rz7iX0W9IUklwW/PwH)*
+
 | GPU Series | Architecture | gfx ID | llama.cpp | vLLM | Ollama |
 |-----------|-------------|--------|-----------|------|--------|
 | MI300X / MI325X / MI350X / MI355X | CDNA3/3+ | gfx942 | Yes | Yes (primary) | Yes |

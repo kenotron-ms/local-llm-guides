@@ -12,6 +12,7 @@ bundle:
 
 includes:
   - bundle: git+https://github.com/singh2/infographic-builder@main
+  - bundle: git+https://github.com/singh2/amplifier-bundle-diagram-beautifier@main
 ---
 
 @local-llm-guides:README.md

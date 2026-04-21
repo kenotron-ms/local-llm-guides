@@ -1,0 +1,28 @@
+digraph agent_model_selector {
+    rankdir=TB;
+    node [fontname="Helvetica", fontsize=12];
+
+    A    [label="Agent task type?", shape=ellipse];
+    B    [label="Agentic coding?", shape=diamond];
+    Q36  [label="Qwen3.6 35B-A3B\nSWE-bench 73.4%\nThinking ON", shape=box, style=filled, fillcolor="#0d3321", color="#27ae60", fontcolor="#e0e0e0"];
+    C    [label="Deep reasoning / math?", shape=diamond];
+    D    [label="Thinking mode?", shape=diamond];
+    Q35T [label="Qwen3.5 35B-A3B\nor 27B \xe2\x80\x94 thinking ON", shape=box, style=filled, fillcolor="#0d3321", color="#27ae60", fontcolor="#e0e0e0"];
+    G4   [label="Gemma 4 26B-A4B\nor 31B", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    E    [label="Vision / multimodal?", shape=diamond];
+    G4V  [label="Gemma 4 26B-A4B\nor Qwen3.5 27B\n(vision via mmproj)", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    F    [label="RAM constrained?", shape=diamond];
+    G4E  [label="Gemma 4 E4B\nAudio on E2B/E4B", shape=box, style=filled, fillcolor="#2d0d4e", color="#9b59b6", fontcolor="#e0e0e0"];
+
+    A -> B;
+    B -> Q36  [label="Yes"];
+    B -> C    [label="No"];
+    C -> D    [label="Yes"];
+    D -> Q35T [label="Required"];
+    D -> G4   [label="Not needed"];
+    C -> E    [label="No"];
+    E -> G4V  [label="Yes"];
+    E -> F    [label="No"];
+    F -> G4E  [label="8 GB or less"];
+    F -> G4   [label="No"];
+}

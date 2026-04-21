@@ -1,0 +1,24 @@
+digraph vllm_decision {
+    rankdir=TB;
+    node [fontname="Helvetica", fontsize=12];
+
+    A  [label="Need an LLM server?", shape=ellipse];
+    B  [label="Multiple concurrent users?", shape=diamond];
+    C  [label="GPU type?", shape=diamond];
+    VL [label="vLLM", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    LC [label="llama.cpp", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    D  [label="Max throughput / batching?", shape=diamond];
+    E  [label="GGUF quantized model?", shape=diamond];
+
+    A -> B;
+    B -> C  [label="Yes"];
+    C -> VL [label="NVIDIA CUDA"];
+    C -> VL [label="AMD MI300X+"];
+    C -> LC [label="Consumer AMD RX"];
+    C -> LC [label="Apple Silicon"];
+    B -> D  [label="No"];
+    D -> VL [label="Yes"];
+    D -> E  [label="No"];
+    E -> LC [label="Yes"];
+    E -> VL [label="No BF16 / FP8"];
+}

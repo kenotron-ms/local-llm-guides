@@ -1,0 +1,41 @@
+digraph hardware_selector {
+    rankdir=TB;
+    node [fontname="Helvetica", fontsize=12];
+
+    A [label="What hardware do I have?", shape=ellipse];
+    B [label="GPU / platform?", shape=diamond];
+    C [label="CUDA Setup", shape=box];
+    D [label="GPU gen?", shape=diamond];
+    E [label="MLX / Metal Setup", shape=box];
+    F [label="llama.cpp CPU", shape=box];
+    G [label="vLLM + llama.cpp", shape=box];
+    H [label="llama.cpp + Ollama", shape=box];
+    I [label="VRAM?", shape=diamond];
+    J [label="E2B Q8 / E4B Q4", shape=box];
+    K [label="E4B Q8 / 27B Q3", shape=box];
+    L [label="26B-A4B Q4 / 27B Q4", shape=box];
+    M [label="26B-A4B Q6 / 35B-A3B Q4", shape=box];
+    N [label="35B-A3B Q8 / 122B-A10B Q4", shape=box];
+    O [label="Unified memory?", shape=diamond];
+    P [label="26B-A4B Q4 / E4B Q8", shape=box];
+    Q [label="35B-A3B Q6 / 27B Q8", shape=box];
+    R [label="122B-A10B Q8 / 397B Q4", shape=box];
+
+    A -> B;
+    B -> C [label="NVIDIA"];
+    B -> D [label="AMD"];
+    B -> E [label="Apple Silicon"];
+    B -> F [label="CPU only"];
+    D -> G [label="MI300X / MI325X+"];
+    D -> H [label="RX 6000 / 7000"];
+    C -> I;
+    I -> J [label="8 GB"];
+    I -> K [label="12 GB"];
+    I -> L [label="16 GB"];
+    I -> M [label="24 GB"];
+    I -> N [label="48+ GB"];
+    E -> O;
+    O -> P [label="16-24 GB"];
+    O -> Q [label="36-64 GB"];
+    O -> R [label="96-192 GB"];
+}

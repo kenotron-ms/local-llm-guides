@@ -1,0 +1,24 @@
+digraph rocm_backend {
+    rankdir=TB;
+    node [fontname="Helvetica", fontsize=12];
+
+    A [label="AMD GPU", shape=ellipse];
+    B [label="Architecture", shape=diamond];
+    C [label="CDNA3+\nMI300X / MI325X\nMI350X / MI355X", shape=box];
+    D [label="CDNA2\nMI250X / MI210", shape=box];
+    E [label="RDNA3\nRX 7900 XTX / XT\nRX 7800 / 7700 XT", shape=box];
+    F [label="RDNA2\nRX 6900 / 6800\nRX 6700 / 6600 XT", shape=box];
+    G [label="vLLM \xe2\x9c\x93  llama.cpp \xe2\x9c\x93  Ollama \xe2\x9c\x93", shape=box, style=filled, fillcolor="#0d3321", color="#27ae60", fontcolor="#e0e0e0"];
+    H [label="vLLM \xe2\x9a\xa0  llama.cpp \xe2\x9c\x93  Ollama \xe2\x9c\x93", shape=box, style=filled, fillcolor="#2d2100", color="#f39c12", fontcolor="#e0e0e0"];
+    I [label="vLLM \xe2\x9c\x97  llama.cpp \xe2\x9c\x93  Ollama \xe2\x9c\x93", shape=box, style=filled, fillcolor="#2d0d0d", color="#e74c3c", fontcolor="#e0e0e0"];
+
+    A -> B;
+    B -> C;
+    B -> D;
+    B -> E;
+    B -> F;
+    C -> G;
+    D -> H;
+    E -> I;
+    F -> I;
+}

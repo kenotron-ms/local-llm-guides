@@ -38,28 +38,8 @@ unsloth/gemma-4-31B-it-GGUF
 
 ## Picking the Right Variant
 
-```
-Gemma 4 Variant Selection
-│
-├─ Phone / edge / Raspberry Pi / 4 GB RAM machine
-│   └─ E2B — also supports audio (ASR, speech translation)
-│
-├─ Laptop with 8 GB RAM / 8 GB VRAM
-│   └─ E4B (Q4 or Q8) — best local multimodal for constrained hardware
-│
-├─ Desktop with 16 GB VRAM, 16 GB unified Mac RAM
-│   └─ 26B-A4B (Q4) — fast MoE, great reasoning, best speed/quality
-│   └─ 31B (Q4) — strongest quality, similar VRAM, slower inference
-│
-├─ 24 GB VRAM (RTX 3090/4090, RX 7900 XTX)
-│   └─ 26B-A4B (Q6) or 31B (Q6) — near-lossless quality
-│
-├─ 48 GB VRAM (A6000, Mac M3 Max 48 GB)
-│   └─ 26B-A4B (BF16) or 31B (Q8)
-│
-└─ 80 GB VRAM (A100, H100, MI300X)
-    └─ 31B (BF16) single GPU, or multi-GPU for batch serving
-```
+![Gemma 4 Variant Selector — Hardware Schematic](../diagrams/blueprint/gemma4_variant_blueprint.png)
+*[view / edit source](https://mermaid.live/edit#pako:fZNfb5swFMW/ypXzsqnJyr8QwsOm0HTNQzO13bSX0ocbfJNYMSbDpF2VZp99NpC0o9JAwvLhnp/PtWHPsoITi9lSFk/ZGssKfkxTBeaafLi/ojxHCCDdeY4bwFZkG0B4xFKgqh4+wmDwGZL95BGFxIUkuJvM4Rx+muHLIVUNJrFVL9ekNVRrVDCEq+QFLr3kPmXmCbdBmqo/vlHNeLMuFBnEjTAP4itK2cNbzLBO4kcNI0gCCwmOkGEDucZtVWwNwJbZTB1I1EDc4ZESHSmRpYw+tZwp6Y0B9UERlgNZaC1NFx2YGzY0z6lpcy80MC9MBpNTLDdseAnpCvSWiJ//2qEU1TMsUKLKul16TssMaubFfkpKExQlzItLu7O29KIu/W5xcAa0XIpMkMqe6wxvS+b4G9r1zDvfNfl895Rt1GSbidXaxmsLO4GC6KzpzndnR3tkNjj5atpP1bd3+9OYzfHGcaxzlLIVzIm9UyKj5II3c5P9n6nvmqnE0nwJR2H2qjRaJlHrKS2h5sJSSBn3PO7wgPq6KosNxb3xYjhehP2skEUZ98ixd8dtFm29LrrovXoDHDt8/F9vnad1O9z3Pffk9kZIodN1sz7LqcxRcBbvWbWm3P6EHMsNO/TZbsuxoqnAVYk5i6tyR4e/)*
 
 ### 26B-A4B vs 31B — Which to Pick?
 

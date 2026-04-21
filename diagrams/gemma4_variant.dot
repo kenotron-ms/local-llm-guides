@@ -1,0 +1,24 @@
+digraph gemma4_variant {
+    rankdir=TB;
+    node [fontname="Helvetica", fontsize=12];
+
+    A    [label="Gemma 4 \xe2\x80\x94 pick a variant", shape=ellipse];
+    B    [label="Available RAM / VRAM?", shape=diamond];
+    E2B  [label="E2B Q4\n~3 GB\nPhone / Pi / edge", shape=box, style=filled, fillcolor="#2d0d4e", color="#9b59b6", fontcolor="#e0e0e0"];
+    E4B4 [label="E4B Q4\n~5 GB\nLaptop / 8 GB RAM", shape=box, style=filled, fillcolor="#2d0d4e", color="#9b59b6", fontcolor="#e0e0e0"];
+    E4B8 [label="E4B Q8\n~7.5 GB\nDesktop, near-lossless", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    M26  [label="26B-A4B Q4\n~16 GB\nBest speed/quality balance", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    C    [label="Dense or MoE?", shape=diamond];
+    M31  [label="31B Q4\n~17 GB\nHighest quality", shape=box, style=filled, fillcolor="#0d3321", color="#27ae60", fontcolor="#e0e0e0"];
+    M31H [label="31B Q8 / BF16\nNear-lossless", shape=box, style=filled, fillcolor="#0d3321", color="#27ae60", fontcolor="#e0e0e0"];
+
+    A -> B;
+    B -> E2B  [label="Less than 5 GB"];
+    B -> E4B4 [label="5\xe2\x80\x938 GB"];
+    B -> E4B8 [label="8\xe2\x80\x9315 GB"];
+    B -> M26  [label="16\xe2\x80\x9320 GB"];
+    B -> C    [label="20\xe2\x80\x9324 GB"];
+    C -> M26  [label="Speed + efficiency"];
+    C -> M31  [label="Max quality"];
+    B -> M31H [label="48+ GB"];
+}

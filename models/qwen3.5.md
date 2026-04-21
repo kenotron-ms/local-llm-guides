@@ -35,25 +35,8 @@ All instruct variants use the `-Instruct` suffix on Hugging Face: `Qwen/Qwen3.5-
 
 ## Picking the Right Variant
 
-```
-Qwen3.5 Variant Selection
-│
-├─ Have a 16 GB VRAM GPU or 16 GB unified Mac RAM?
-│   └─ 27B (Q4) — strong dense model, fits exactly
-│
-├─ Have a 24 GB VRAM GPU?
-│   ├─ 27B (Q6/Q8) — near-lossless quality
-│   └─ 35B-A3B (Q4) — faster inference via MoE, similar or better quality
-│
-├─ Have 2× 24 GB or 1× 48 GB VRAM?
-│   └─ 35B-A3B (Q8) or 27B (BF16)
-│
-├─ Have 80 GB VRAM (A100/H100)?
-│   └─ 35B-A3B (BF16) or 122B-A10B (Q4) with vLLM
-│
-└─ Multi-GPU (2× A100/H100)?
-    └─ 122B-A10B (BF16) with vLLM tensor parallelism
-```
+![Qwen 3.5 Variant Selector — Hardware Schematic](../diagrams/blueprint/qwen35_variant_blueprint.png)
+*[view / edit source](https://mermaid.live/edit#pako:fZPdjpswEIZfZcTetCppwZATF63C0qY3qTbdHi6WvZjCJLHCqbZJtMqmz17bhGiTSgXJwvb83/wzNgcnq3NyImdV1Ptsg0LBtyStQD+zVw/LPVXB2yGkLfP8EBqebQFhh4JjpR5fw2DwHuLDbIe8wF8FwY+vs8WHY1p1gNjsP/uhVQf+CObxM/xk44fUYeMYlmGaVn80dh7rj3sl6moNOVWSXFhxJcEqLDN1Hi+Qkw7JQou8PdwJXguunkxuE3Zrwz6hVCQV8GpFgqqMdPZgqLMHw3gwC84OJp0DEw6L+qMLegszxXcEDQos5Tl9x/3M1xvD/d1ioZPaml7aY6eKw4m1lxwSUxTUwtB7i4kNvW+Icmvr5eqyA0NDou/ZctR3bWI8s3Hn+QuhGBS1lAVJ2TXvqlfhqVcTr0P5jGmSHnULfK/vwYh1vEVbKD6Y332Hpt6T2NTtP0DmeW86VDA1R6lHgzofqN7vWAkqzKhSuoh3UFpwpe+axXVAXVcURSXPT9NgeDE1VV8saNd6XqBYU6+YGkKe9cSsQCkTWoEW6UtUFNGNjz4ycqW+X1uKbkKcevnUzeqiFtENeea90toEJ7WXBwHzz2o2Rhp5/1Xn2UnKch897yyl0ZgYu5Y6rlOSKJHnTnRw1IZK8zPmKLbO0XXaJkdFCce1voZOpERLx78=)*
 
 ---
 

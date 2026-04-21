@@ -1,0 +1,24 @@
+digraph mlx_path_selector {
+    rankdir=TB;
+    node [fontname="Helvetica", fontsize=12];
+
+    A  [label="Apple Silicon inference", shape=ellipse];
+    B  [label="Model input type?", shape=diamond];
+    C  [label="mlx_vlm", shape=box, style=filled, fillcolor="#0d3321", color="#27ae60", fontcolor="#e0e0e0"];
+    D  [label="Priority?", shape=diamond];
+    OL [label="Ollama Metal", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    LC [label="llama.cpp Metal", shape=box, style=filled, fillcolor="#1a1a2e", color="#4a90d9", fontcolor="#e0e0e0"];
+    E  [label="~35-55 tok/s\n(M3/M4 Max, 26B Q4)", shape=box];
+    F  [label="~25-40 tok/s\n(M3/M4 Max, 26B Q4)", shape=box];
+    G  [label="~20-35 tok/s\n(M3/M4 Max, 26B Q4)", shape=box];
+
+    A  -> B;
+    B  -> C  [label="Vision / multimodal"];
+    B  -> D  [label="Text only"];
+    D  -> C  [label="Max tok/s"];
+    D  -> OL [label="Easy setup"];
+    D  -> LC [label="Full control / GGUF"];
+    C  -> E;
+    LC -> F;
+    OL -> G;
+}
