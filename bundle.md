@@ -1,6 +1,6 @@
 ---
 bundle:
-  name: local-llm-guides
+  name: llm-guides
   version: 0.1.0
   description: |
     Team knowledge bundle for running Qwen3.5, Qwen3.6, and Gemma 4 locally.
@@ -15,19 +15,19 @@ includes:
   - bundle: git+https://github.com/singh2/amplifier-bundle-diagram-beautifier@main
 ---
 
-@local-llm-guides:README.md
+@llm-guides:README.md
 
-@local-llm-guides:models/qwen3.5.md
-@local-llm-guides:models/qwen3.6.md
-@local-llm-guides:models/gemma4.md
+@llm-guides:models/qwen3.5.md
+@llm-guides:models/qwen3.6.md
+@llm-guides:models/gemma4.md
 
-@local-llm-guides:backends/llama-cpp.md
-@local-llm-guides:backends/ollama.md
-@local-llm-guides:backends/vllm.md
-@local-llm-guides:backends/lmstudio.md
+@llm-guides:backends/llama-cpp.md
+@llm-guides:backends/ollama.md
+@llm-guides:backends/vllm.md
+@llm-guides:backends/lmstudio.md
 
-@local-llm-guides:hardware/cuda.md
-@local-llm-guides:hardware/rocm.md
-@local-llm-guides:hardware/mlx.md
+@llm-guides:hardware/cuda.md
+@llm-guides:hardware/rocm.md
+@llm-guides:hardware/mlx.md
 
-@local-llm-guides:agent-integration.md
+@llm-guides:agent-integration.md
