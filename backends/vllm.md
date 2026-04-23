@@ -30,13 +30,11 @@
 
 ## Installation
 
-### pip — NVIDIA CUDA
+<!-- when:os=linux -->
+### NVIDIA CUDA (pip)
 
 ```bash
-# Python 3.12 recommended
-python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-# .venv\Scripts\activate   # Windows
+python3.12 -m venv .venv && source .venv/bin/activate
 
 # Latest nightly (CUDA 12.9)
 pip install -U vllm --pre \
@@ -48,37 +46,46 @@ pip install -U vllm --pre \
 pip install vllm
 ```
 
-### pip — AMD ROCm (MI300X, MI325X, MI350X, MI355X only)
+### AMD ROCm (pip) — MI300X+ only
 
-> Requires Python 3.12, ROCm 7.2.1, glibc >= 2.35 (Ubuntu 22.04+)
+> Requires Python 3.12, ROCm 7.2.1, glibc ≥ 2.35 (Ubuntu 22.04+)
 
 ```bash
-python3.12 -m venv .venv
-source .venv/bin/activate
-
+python3.12 -m venv .venv && source .venv/bin/activate
 pip install vllm --pre \
   --extra-index-url https://wheels.vllm.ai/rocm/nightly/rocm721 \
   --upgrade
 ```
 
-### Docker — NVIDIA CUDA
+### Docker (NVIDIA)
 
 ```bash
-# Gemma 4 tagged image
-docker pull vllm/vllm-openai:gemma4
-
-# CUDA 13.0 variant
-docker pull vllm/vllm-openai:gemma4-cu130
-
-# General latest
-docker pull vllm/vllm-openai:latest
+docker pull vllm/vllm-openai:latest    # or :gemma4, :gemma4-cu130
 ```
 
-### Docker — AMD ROCm
+### Docker (AMD ROCm)
 
 ```bash
 docker pull vllm/vllm-openai-rocm:gemma4
 ```
+<!-- /when -->
+
+<!-- when:os=windows -->
+> vLLM has **limited Windows support**. Docker with NVIDIA WSL2 is the recommended path:
+
+```powershell
+# Ensure WSL2 + Docker Desktop with GPU support is set up first
+docker pull vllm/vllm-openai:latest
+docker run --runtime=nvidia --gpus all -p 8000:8000 \
+  vllm/vllm-openai:latest --model google/gemma-4-E4B-it
+```
+
+For native Windows pip install, see the [vLLM Windows docs](https://docs.vllm.ai/en/latest/getting_started/installation/gpu/index.html).
+<!-- /when -->
+
+<!-- when:os=mac -->
+> **vLLM does not support Apple Silicon.** Use [llama.cpp](llama-cpp.md) with Metal or [mlx_vlm](../hardware/mlx.md) instead for local inference on macOS.
+<!-- /when -->
 
 ---
 

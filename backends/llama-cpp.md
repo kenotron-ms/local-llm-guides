@@ -27,28 +27,37 @@ Download from the [GitHub Releases](https://github.com/ggml-org/llama.cpp/releas
 
 ### Option B — Build from Source
 
-**Prerequisites** (all platforms):
-
-```bash
-# Linux / Debian/Ubuntu
-apt-get update
-apt-get install -y pciutils build-essential cmake curl libcurl4-openssl-dev git
-```
-
-```bash
-# macOS (via Homebrew)
-brew install cmake curl
-```
-
-**Clone**:
+**Clone first (all platforms):**
 
 ```bash
 git clone https://github.com/ggml-org/llama.cpp
 cd llama.cpp
 ```
 
-**Build — NVIDIA CUDA**:
+**Install prerequisites:**
 
+<!-- when:os=linux -->
+```bash
+# Debian / Ubuntu
+apt-get update
+apt-get install -y pciutils build-essential cmake curl libcurl4-openssl-dev git
+```
+<!-- /when -->
+
+<!-- when:os=mac -->
+```bash
+brew install cmake curl
+```
+<!-- /when -->
+
+<!-- when:os=windows -->
+Install [CMake](https://cmake.org/download/) and [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022) (with "Desktop development with C++" workload). Then open a Developer Command Prompt.
+<!-- /when -->
+
+**Build:**
+
+<!-- when:os=linux -->
+**NVIDIA CUDA** (most common on Linux):
 ```bash
 cmake -B build \
   -DBUILD_SHARED_LIBS=OFF \
@@ -59,8 +68,7 @@ cmake --build build --config Release -j \
 cp build/bin/llama-* .
 ```
 
-**Build — AMD ROCm** (Linux):
-
+**AMD ROCm** (RX 6000/7000 series):
 ```bash
 # Ensure ROCm 6.3+ is installed first — see hardware/rocm.md
 cmake -B build \
@@ -75,21 +83,7 @@ cp build/bin/llama-* .
 
 See [hardware/rocm.md](../hardware/rocm.md) for the full `AMDGPU_TARGETS` table.
 
-**Build — Apple Silicon (Metal)**:
-
-```bash
-# Metal is auto-detected on macOS — no extra flags needed
-cmake -B build \
-  -DBUILD_SHARED_LIBS=OFF \
-  -DGGML_CUDA=OFF
-cmake --build build --config Release -j \
-  --clean-first \
-  --target llama-cli llama-mtmd-cli llama-server
-cp build/bin/llama-* .
-```
-
-**Build — CPU only**:
-
+**CPU only** (no GPU):
 ```bash
 cmake -B build \
   -DBUILD_SHARED_LIBS=OFF \
@@ -98,6 +92,32 @@ cmake --build build --config Release -j \
   --target llama-cli llama-server
 cp build/bin/llama-* .
 ```
+<!-- /when -->
+
+<!-- when:os=mac -->
+**Apple Silicon (Metal)** — Metal is auto-detected, no extra flags needed:
+```bash
+cmake -B build \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DGGML_CUDA=OFF
+cmake --build build --config Release -j \
+  --clean-first \
+  --target llama-cli llama-mtmd-cli llama-server
+cp build/bin/llama-* .
+```
+<!-- /when -->
+
+<!-- when:os=windows -->
+**NVIDIA CUDA on Windows:**
+```bash
+cmake -B build -DBUILD_SHARED_LIBS=OFF -DGGML_CUDA=ON
+cmake --build build --config Release -j --clean-first ^
+  --target llama-cli llama-server
+copy build\bin\Release\llama-*.exe .
+```
+
+> **Tip:** For Windows, the pre-built binaries (Option A above) are often easier than building from source.
+<!-- /when -->
 
 ---
 

@@ -13,15 +13,27 @@
 
 ## Installation
 
+<!-- when:os=linux -->
 ```bash
-# Linux / macOS — one-liner
 curl -fsSL https://ollama.com/install.sh | sh
-
-# macOS — native app (also handles Metal acceleration)
-# Download from https://ollama.com/download/mac
-
-# Windows — download installer from https://ollama.com/download/windows
 ```
+
+Ollama registers as a **systemd service** automatically. Re-running the script upgrades in place.
+<!-- /when -->
+
+<!-- when:os=mac -->
+Download the **macOS app** from [ollama.com/download/mac](https://ollama.com/download/mac) — runs as a menu bar process and handles Metal automatically.
+
+Or via Homebrew:
+```bash
+brew install ollama
+ollama serve   # start the server
+```
+<!-- /when -->
+
+<!-- when:os=windows -->
+Download the **Windows installer** from [ollama.com/download/windows](https://ollama.com/download/windows). The `.exe` auto-configures CUDA if NVIDIA drivers are installed.
+<!-- /when -->
 
 ### Verify Installation
 
@@ -212,19 +224,29 @@ You are a careful reasoning assistant.
 
 ### Change Default Port
 
+<!-- when:os=linux -->
 ```bash
-# Linux systemd
 sudo systemctl edit ollama --force
-# Add:
-# [Service]
+# Add under [Service]:
 # Environment="OLLAMA_HOST=0.0.0.0:11434"
 sudo systemctl restart ollama
 ```
+<!-- /when -->
 
+<!-- when:os=mac -->
 ```bash
-# macOS / one-shot
 OLLAMA_HOST=0.0.0.0:11434 ollama serve
 ```
+<!-- /when -->
+
+<!-- when:os=windows -->
+In PowerShell before starting `ollama serve`:
+```powershell
+$env:OLLAMA_HOST = "0.0.0.0:11434"
+ollama serve
+```
+Or add `OLLAMA_HOST` permanently via System → Advanced → Environment Variables.
+<!-- /when -->
 
 ### Expose to Network (team use)
 
@@ -320,26 +342,47 @@ response = client.chat.completions.create(
 
 ### Check GPU Usage
 
+<!-- when:os=linux -->
 ```bash
 # NVIDIA
 nvidia-smi
-
 # AMD
 rocm-smi
-
-# macOS
-# Activity Monitor → GPU History, or:
-sudo powermetrics --samplers gpu_power -i1000 -n1
 ```
+<!-- /when -->
+
+<!-- when:os=mac -->
+```bash
+sudo powermetrics --samplers gpu_power -i1000 -n1
+# Or: Activity Monitor → Window → GPU History
+```
+<!-- /when -->
+
+<!-- when:os=windows -->
+```bash
+# NVIDIA
+nvidia-smi
+# Or: Task Manager → Performance → GPU
+```
+<!-- /when -->
 
 ---
 
 ## Upgrading Ollama
 
+<!-- when:os=linux -->
 ```bash
-# Linux
 curl -fsSL https://ollama.com/install.sh | sh  # re-running upgrades in place
-
-# macOS
-# Download latest from https://ollama.com/download/mac
 ```
+<!-- /when -->
+
+<!-- when:os=mac -->
+Download the latest from [ollama.com/download/mac](https://ollama.com/download/mac), or via Homebrew:
+```bash
+brew upgrade ollama
+```
+<!-- /when -->
+
+<!-- when:os=windows -->
+Download the latest installer from [ollama.com/download/windows](https://ollama.com/download/windows) and run it — upgrades in place.
+<!-- /when -->

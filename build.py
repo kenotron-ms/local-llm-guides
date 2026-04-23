@@ -46,9 +46,21 @@ PICKER_HTML = (
     '</div>'
 )
 
+PICKER_HTML_OS = (
+    '<div class="path-picker" id="path-picker">'
+    '<span class="picker-label">Showing for</span>'
+    '<div class="picker-group">'
+    '<span class="picker-group-name">OS</span>'
+    '<div class="picker-pills">'
+    '<button class="picker-pill" data-dim="os" data-val="mac">macOS</button>'
+    '<button class="picker-pill" data-dim="os" data-val="linux">Linux</button>'
+    '<button class="picker-pill" data-dim="os" data-val="windows">Windows</button>'
+    '</div></div>'
+    '</div>'
+)
+
 def is_guide_page(slug: str) -> bool:
-    """Only show path picker on pages that actually have data-when content."""
-    return slug == "agent-integration"
+    return slug == "agent-integration" or slug.startswith("backends/")
 
 
 NAV = [
@@ -881,7 +893,12 @@ def render_page(page: dict, content_html: str, toc_tokens, search_index: list) -
     bc_html      = build_breadcrumb(page, slug)
     pnav_html    = build_page_nav(page, slug)
     search_json  = json.dumps(search_index, ensure_ascii=False)
-    path_picker_html = PICKER_HTML if is_guide_page(slug) else ""
+    if slug == "agent-integration":
+        path_picker_html = PICKER_HTML
+    elif slug.startswith("backends/"):
+        path_picker_html = PICKER_HTML_OS
+    else:
+        path_picker_html = ""
     js_code      = JS_TEMPLATE.replace("__SEARCH_INDEX__", search_json)
 
     return f"""<!DOCTYPE html>

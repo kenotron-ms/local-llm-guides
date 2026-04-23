@@ -13,13 +13,24 @@
 
 ## Installation
 
-1. Download the installer for your OS from [lmstudio.ai](https://lmstudio.ai)
-2. Run the installer
-3. On first launch, LM Studio detects your GPU automatically:
-   - **NVIDIA**: uses CUDA acceleration
-   - **AMD**: uses ROCm acceleration (Windows/Linux only)
-   - **Apple Silicon**: uses Metal acceleration (best performance on macOS)
-   - **CPU fallback**: used if no GPU detected
+<!-- when:os=mac -->
+1. Download the **macOS installer** from [lmstudio.ai/download](https://lmstudio.ai) — choose the Apple Silicon or Intel build
+2. Open the `.dmg` and drag LM Studio to Applications
+3. On first launch it detects Metal acceleration automatically
+<!-- /when -->
+
+<!-- when:os=windows -->
+1. Download the **Windows installer** from [lmstudio.ai/download](https://lmstudio.ai)
+2. Run the `.exe`
+3. On first launch LM Studio detects NVIDIA (CUDA) or AMD (ROCm) automatically
+<!-- /when -->
+
+<!-- when:os=linux -->
+1. Download the **Linux AppImage** from [lmstudio.ai/download](https://lmstudio.ai)
+2. Make it executable: `chmod +x LM-Studio-*.AppImage`
+3. Run it: `./LM-Studio-*.AppImage`
+4. GPU acceleration (NVIDIA/AMD) is detected automatically if drivers are installed
+<!-- /when -->
 
 ---
 
@@ -189,12 +200,14 @@ Enable in Model Parameters when available. Reduces VRAM usage at long context le
 
 ---
 
+<!-- when:os=mac -->
 ## Tips for Apple Silicon (M1/M2/M3/M4)
 
 - LM Studio uses Metal acceleration automatically
 - Unified memory means RAM and VRAM are the same pool — a 32 GB M3 Pro can fully load a 26B Q4 model
 - Use **MLX variants** for even better performance on Apple Silicon: look for models tagged `MLX` in the LM Studio catalog (these are `mlx_vlm` format internally)
 - For maximum Apple Silicon performance with Qwen3.6 and Gemma 4, consider using the mlx_vlm CLI approach instead — see [hardware/mlx.md](../hardware/mlx.md)
+<!-- /when -->
 
 ---
 
