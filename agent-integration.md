@@ -1,27 +1,27 @@
 # Agent Integration Guide
 
-This guide explains how to configure **Amplifier agents** (and any OpenAI-SDK-compatible client) to use local LLMs in place of cloud APIs. All four backends expose an OpenAI-compatible REST API, so switching between local and cloud is a matter of changing `base_url` and `model`.
+This guide walks you through connecting Amplifier agents to a local LLM — from starting your server to making your first request. Use the selectors above to filter commands for your setup.
 
 ---
 
 ## Quick Reference: Endpoint URLs
 
-| Backend | Default URL | Model Name Source |
-|---------|------------|------------------|
-| llama-server | `http://localhost:8001/v1` | `--alias` flag at server start |
-| Ollama | `http://localhost:11434/v1` | `ollama list` |
+| Backend | Default URL | Model name |
+|---------|-------------|-----------|
+| llama-server | `http://localhost:8001/v1` | `--alias` value at server start |
+| Ollama | `http://localhost:11434/v1` | exact name from `ollama list` |
 | vLLM | `http://localhost:8000/v1` | HuggingFace model ID |
-| LM Studio | `http://localhost:1234/v1` | Shown in Developer tab |
+| LM Studio | `http://localhost:1234/v1` | shown in Developer tab |
 
 ---
 
-## Starting a Local Server
+## Step 1: Start Your Local Server
 
-Pick one backend and start it before configuring agents.
+Pick a backend below and run the command. Leave this running — the following steps connect to it.
 
-### Recommended for Agents: llama-server (Qwen3.6-27B)
+<!-- when:backend=llamacpp -->
 
-Best all-round choice — flagship-level agentic coding in a 27B dense model, fits a single 16 GB VRAM GPU, native tool calling, thinking mode:
+**Qwen3.6-27B** — flagship coding model, fits 16 GB VRAM (streams the ~17 GB Q4 file on first run):
 
 ```bash
 llama-server \
@@ -35,7 +35,6 @@ llama-server \
   --top-p 0.95 \
   --top-k 20 \
   --min-p 0.0 \
-  --presence-penalty 0.0 \
   --parallel 4 \
   --cont-batching \
   --jinja \
@@ -44,9 +43,7 @@ llama-server \
   --port 8001
 ```
 
-### Recommended for Agents: llama-server (Qwen3.6-35B-A3B)
-
-Best when 24 GB VRAM is available — MoE model with 3B active params, excellent SWE-bench score, native vision:
+**Qwen3.6-35B-A3B** — MoE model if you have 24 GB VRAM and need vision:
 
 ```bash
 ./llama.cpp/llama-server \
@@ -56,225 +53,211 @@ Best when 24 GB VRAM is available — MoE model with 3B active params, excellent
   --ctx-size 32768 \
   --n-gpu-layers 999 \
   --flash-attn \
-  --temp 0.6 \
-  --top-p 0.95 \
-  --top-k 20 \
-  --min-p 0.0 \
   --parallel 4 \
   --cont-batching \
   --chat-template-kwargs '{"enable_thinking":true}' \
   --port 8001
 ```
 
-### Recommended for Agents: llama-server (Gemma 4 26B-A4B)
+<!-- /when -->
 
-Best for multimodal agents (image + text) and reasoning tasks:
-
-```bash
-./llama.cpp/llama-server \
-  --model ./models/gemma4-26b/gemma-4-26B-A4B-it-UD-Q4_K_XL.gguf \
-  --mmproj ./models/gemma4-26b/mmproj-BF16.gguf \
-  --alias "gemma4" \
-  --ctx-size 32768 \
-  --n-gpu-layers 999 \
-  --flash-attn \
-  --temp 1.0 \
-  --top-p 0.95 \
-  --top-k 64 \
-  --parallel 4 \
-  --cont-batching \
-  --chat-template-kwargs '{"enable_thinking":true}' \
-  --port 8001
-```
-
-### Quick Start via Ollama
+<!-- when:backend=ollama -->
 
 ```bash
 ollama serve &
-ollama pull qwen3.6:35b-a3b
-# Model available at http://localhost:11434/v1, model name: "qwen3.6:35b-a3b"
+ollama pull qwen3.6:27b
+# Server at http://localhost:11434/v1  model: "qwen3.6:27b"
 ```
 
-### Multi-GPU Production (vLLM)
+For the MoE model: `ollama pull qwen3.6:35b-a3b`
+
+<!-- /when -->
+
+<!-- when:backend=vllm -->
+
+**Qwen3.6-27B** on a single A100/H100/MI300X:
 
 ```bash
-vllm serve Qwen/Qwen3.6-35B-A3B \
-  --tensor-parallel-size 2 \
+vllm serve Qwen/Qwen3.6-27B \
+  --port 8000 \
+  --tensor-parallel-size 1 \
   --max-model-len 65536 \
   --reasoning-parser qwen3 \
   --enable-auto-tool-choice \
   --tool-call-parser qwen3_coder \
-  --host 0.0.0.0 \
-  --port 8000
+  --host 0.0.0.0
+```
+
+Multi-GPU for 262K context:
+
+```bash
+vllm serve Qwen/Qwen3.6-27B \
+  --port 8000 \
+  --tensor-parallel-size 4 \
+  --max-model-len 262144 \
+  --reasoning-parser qwen3 \
+  --enable-auto-tool-choice \
+  --tool-call-parser qwen3_coder
+```
+
+<!-- /when -->
+
+<!-- when:backend=lmstudio -->
+
+1. Open LM Studio → Browse → search `Qwen3.6-27B` → Download the Q4_K_M GGUF
+2. Go to the **Developer** tab → Load Model → click **Start Server**
+3. Server starts at `http://localhost:1234/v1` — the model name is shown in the tab header
+
+<!-- /when -->
+
+Confirm the server is up:
+
+```bash
+curl http://localhost:8001/v1/models   # or :11434/v1/models, :8000/v1/models, :1234/v1/models
 ```
 
 ---
 
-## Configuring Amplifier
+## Step 2: Configure Amplifier
 
-The `provider-chat-completions` module ships pre-installed with `amplifier-app-cli` — no bundle install or `module add` needed. It speaks the OpenAI Chat Completions wire format, so it works with any backend that serves `/v1/chat/completions`.
-
-### Interactive setup with `amplifier provider manage`
+The `provider-chat-completions` module ships pre-installed with `amplifier-app-cli`. Run the interactive wizard:
 
 ```bash
 amplifier provider manage
-# or: amplifier provider manage --global   (writes to ~/.amplifier/settings.yaml)
-# or: amplifier provider manage --project  (writes to .amplifier/settings.yaml, committed)
-# or: amplifier provider manage --local    (writes to .amplifier/settings.local.yaml, gitignored)
 ```
 
-The wizard will ask for:
-1. **Provider type** — select **"OpenAI-Compatible (self-hosted)"**
-2. **Base URL** — your server's `/v1` endpoint (see table below)
-3. **Model name** — the exact identifier your server expects
-4. **API key** — enter `not-needed` for unauthenticated local servers
+Select **"OpenAI-Compatible (self-hosted)"**, then enter:
 
-| Backend | Base URL | Model name |
-|---------|----------|-----------|
-| llama-server | `http://localhost:8001/v1` | `default` (or your `--alias` value) |
-| Ollama | `http://localhost:11434/v1` | exact name from `ollama list` (e.g. `qwen3.6:27b`) |
-| vLLM | `http://localhost:8000/v1` | HuggingFace ID matching your `--model` arg |
-| LM Studio | `http://localhost:1234/v1` | shown in Developer tab |
+<!-- when:backend=llamacpp -->
 
-After the wizard completes, secrets go to `~/.amplifier/keys.env` and the provider config is written to your chosen settings file. Verify it worked:
+| Prompt | Value |
+|--------|-------|
+| Base URL | `http://localhost:8001/v1` |
+| Model name | `qwen3.6-27b` (or whatever you passed to `--alias`) |
+| API key | `not-needed` |
+
+<!-- /when -->
+
+<!-- when:backend=ollama -->
+
+| Prompt | Value |
+|--------|-------|
+| Base URL | `http://localhost:11434/v1` |
+| Model name | `qwen3.6:27b` (exact name from `ollama list`) |
+| API key | `not-needed` |
+
+<!-- /when -->
+
+<!-- when:backend=vllm -->
+
+| Prompt | Value |
+|--------|-------|
+| Base URL | `http://localhost:8000/v1` |
+| Model name | `Qwen/Qwen3.6-27B` (exact HuggingFace ID matching your `--model` arg) |
+| API key | `not-needed` (or your `--api-key` value if set) |
+
+<!-- /when -->
+
+<!-- when:backend=lmstudio -->
+
+| Prompt | Value |
+|--------|-------|
+| Base URL | `http://localhost:1234/v1` |
+| Model name | model name shown in the Developer tab |
+| API key | `not-needed` |
+
+<!-- /when -->
+
+After the wizard completes, your `~/.amplifier/settings.yaml` gets a new provider block and `~/.amplifier/keys.env` gets the base URL. Verify:
 
 ```bash
 amplifier provider current
 ```
 
-### What the config looks like
+### Route specific tasks to the local model
 
-**`~/.amplifier/settings.yaml`** (written by the wizard):
-```yaml
-config:
-  providers:
-    - module: provider-chat-completions
-      source: git+https://github.com/microsoft/amplifier-module-provider-chat-completions@main
-      config:
-        base_url: ${CHAT_COMPLETIONS_BASE_URL}
-        default_model: default
-        priority: 10
-```
-
-**`~/.amplifier/keys.env`** (secrets, never committed):
-```bash
-CHAT_COMPLETIONS_BASE_URL=http://localhost:8001/v1
-```
-
-### Key config fields
-
-| Field | Default | Notes |
-|-------|---------|-------|
-| `base_url` | *(required)* | Full URL including `/v1`. Missing = provider silently skips, no crash. |
-| `default_model` | *(required)* | Passed in every request. For llama-server, any string works. |
-| `api_key` | `not-needed` | Omit or use empty string for unauthenticated servers. |
-| `priority` | `100` | Lower = higher priority. Use `10` to prefer local over cloud fallbacks. |
-| `timeout` | `300.0` | Increase for slow hardware or large context. |
-| `parallel_tool_calls` | `true` | Set `false` for Ollama models that don't support parallel tool calls. |
-| `temperature` | `0.7` | Override per-provider default. |
-| `max_tokens` | `4096` | Override per-provider default. |
-
-### Routing local models by task type
-
-Amplifier agents declare `model_role` in their frontmatter (e.g. `model_role: coding`). You can route specific roles to your local model without touching agent code:
-
-**Option A — per-project overrides in settings.yaml:**
-```yaml
-# .amplifier/settings.yaml
-routing:
-  matrix: balanced       # start from the built-in balanced matrix
-  overrides:
-    coding:
-      - provider: chat-completions
-        model: default   # or your vLLM HuggingFace ID
-    fast:
-      - provider: chat-completions
-        model: default
-      - base             # fall back to balanced matrix candidates if local is down
-```
-
-The `base` keyword appends the matrix's original candidates after your local overrides. Without it, your list completely replaces them.
-
-**Option B — multi-instance with named IDs:**
-
-When running multiple local servers simultaneously, assign each an `id:` and reference it in routing:
+Add routing overrides to `~/.amplifier/settings.yaml`:
 
 ```yaml
-# ~/.amplifier/settings.yaml
-config:
-  providers:
-    - module: provider-chat-completions
-      id: vllm-local
-      source: git+https://github.com/microsoft/amplifier-module-provider-chat-completions@main
-      config:
-        base_url: http://localhost:8000/v1
-        default_model: Qwen/Qwen3.6-27B
-        priority: 10
-
-    - module: provider-chat-completions
-      id: ollama-local
-      source: git+https://github.com/microsoft/amplifier-module-provider-chat-completions@main
-      config:
-        base_url: http://localhost:11434/v1
-        default_model: "qwen3.6:27b"
-        priority: 20
-        parallel_tool_calls: false
-
 routing:
   matrix: balanced
   overrides:
     coding:
-      - provider: vllm-local
-        model: Qwen/Qwen3.6-27B
+      - provider: chat-completions
+        model: qwen3.6-27b   # or your vLLM model ID / ollama model name
     fast:
-      - provider: ollama-local
-        model: "qwen3.6:27b"
-      - base
+      - provider: chat-completions
+        model: qwen3.6-27b
+      - base               # fall back to balanced matrix if local server is down
 ```
 
-**Scope precedence:** `local` overrides `project` overrides `global`. Use `--global` for personal machine-wide config, `--project` for team-shared endpoints, `--local` for per-developer overrides without affecting teammates.
-
-> **Note:** The `provider-chat-completions` module handles only transport (HTTP + tool call marshalling + retries). You still need a base bundle for tools, the orchestrator, and agents — `foundation` or `exp-lean-foundation` (more token-efficient, better for smaller context windows).
+`base` appends the matrix's original candidates after your local model. Without it, only your local model is tried for that role.
 
 ---
 
-## Direct Python Usage
+## Step 3: Verify the Connection
+
+```bash
+curl http://localhost:8001/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "qwen3.6-27b",
+    "messages": [{"role": "user", "content": "Reply with: connection OK"}],
+    "max_tokens": 20
+  }'
+```
+
+You should see a response with `"content": "connection OK"` (or similar). If not, check that the server from Step 1 is still running.
+
+---
+
+## Step 4: Make Your First Agentic Request
 
 ```python
 from openai import OpenAI
 
-# Connect to local backend
 client = OpenAI(
-    base_url="http://localhost:8001/v1",  # or :11434/v1 (Ollama), :1234/v1 (LM Studio)
-    api_key="none",
+    base_url="http://localhost:8001/v1",   # match your backend
+    api_key="not-needed",
 )
 
-# Verify the server is up and see available models
-models = client.models.list()
-for m in models.data:
-    print(m.id)
-```
-
-### Basic Chat
-
-```python
+# Basic chat
 response = client.chat.completions.create(
-    model="qwen3.6",          # use model alias from --alias or from ollama list
+    model="qwen3.6-27b",                   # match your --alias or model name
     messages=[
         {"role": "system", "content": "You are a senior software engineer."},
-        {"role": "user", "content": "Review this Python function for bugs."}
+        {"role": "user", "content": "Write a Python function that checks if a number is prime."},
     ],
-    max_tokens=8192,
-    temperature=0.6,          # thinking mode: 0.6 for coding tasks
+    max_tokens=2048,
+    temperature=0.6,
 )
 print(response.choices[0].message.content)
 ```
 
-### Streaming
+With thinking mode (Qwen3.x — access the reasoning trace):
+
+```python
+response = client.chat.completions.create(
+    model="qwen3.6-27b",
+    messages=[{"role": "user", "content": "Find the bug: def fib(n): return fib(n-1)+fib(n-2)"}],
+    max_tokens=8192,
+    extra_body={"chat_template_kwargs": {"enable_thinking": True}},
+)
+reasoning = getattr(response.choices[0].message, "reasoning_content", None)
+if reasoning:
+    print("=== Thinking ===")
+    print(reasoning)
+print("=== Answer ===")
+print(response.choices[0].message.content)
+```
+
+---
+
+## Reference: Streaming
 
 ```python
 stream = client.chat.completions.create(
-    model="qwen3.6",
+    model="qwen3.6-27b",
     messages=[{"role": "user", "content": "Write a REST API in FastAPI."}],
     max_tokens=16384,
     temperature=0.6,
@@ -285,48 +268,12 @@ for chunk in stream:
         print(chunk.choices[0].delta.content, end="", flush=True)
 ```
 
-### Thinking Mode + Access Reasoning Trace
+---
 
-```python
-# Works with llama-server + vLLM (Qwen3.x)
-response = client.chat.completions.create(
-    model="qwen3.6",
-    messages=[{"role": "user", "content": "Find the bug in this code: def fib(n): return fib(n-1)+fib(n-2)"}],
-    max_tokens=32768,
-    extra_body={
-        "chat_template_kwargs": {"enable_thinking": True}
-    },
-)
-# Reasoning trace (what the model thought through)
-reasoning = getattr(response.choices[0].message, "reasoning_content", None)
-if reasoning:
-    print("=== Thinking ===")
-    print(reasoning)
-print("=== Answer ===")
-print(response.choices[0].message.content)
-```
-
-### Tool Calling (Agentic Workflows)
+## Reference: Tool Calling (Agentic Loop)
 
 ```python
 tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": "Read the contents of a file",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {
-                        "type": "string",
-                        "description": "Absolute or relative file path"
-                    }
-                },
-                "required": ["path"]
-            }
-        }
-    },
     {
         "type": "function",
         "function": {
@@ -334,58 +281,40 @@ tools = [
             "description": "Run a shell command and return stdout",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "command": {"type": "string"}
-                },
-                "required": ["command"]
-            }
-        }
+                "properties": {"command": {"type": "string"}},
+                "required": ["command"],
+            },
+        },
     }
 ]
 
 messages = [
     {"role": "system", "content": "You are a helpful coding assistant."},
-    {"role": "user", "content": "Check if there are any Python syntax errors in the src/ directory."}
+    {"role": "user", "content": "Check if there are any Python syntax errors in the src/ directory."},
 ]
 
 response = client.chat.completions.create(
-    model="qwen3.6",
+    model="qwen3.6-27b",
     messages=messages,
     tools=tools,
     tool_choice="auto",
     max_tokens=4096,
 )
 
-# Agentic loop
 while response.choices[0].finish_reason == "tool_calls":
-    tool_calls = response.choices[0].message.tool_calls
-    messages.append(response.choices[0].message)  # add assistant message
-
-    for tc in tool_calls:
-        import json
+    import json, subprocess
+    messages.append(response.choices[0].message)
+    for tc in response.choices[0].message.tool_calls:
         args = json.loads(tc.function.arguments)
-        
-        # Execute the tool (your implementation)
-        if tc.function.name == "run_command":
-            import subprocess
-            result = subprocess.run(args["command"], shell=True, capture_output=True, text=True)
-            tool_result = result.stdout + result.stderr
-        else:
-            tool_result = f"Tool {tc.function.name} not implemented"
-
+        result = subprocess.run(args["command"], shell=True, capture_output=True, text=True)
         messages.append({
             "role": "tool",
             "tool_call_id": tc.id,
-            "content": tool_result
+            "content": result.stdout + result.stderr,
         })
-
-    # Next iteration
     response = client.chat.completions.create(
-        model="qwen3.6",
-        messages=messages,
-        tools=tools,
-        tool_choice="auto",
-        max_tokens=4096,
+        model="qwen3.6-27b", messages=messages, tools=tools,
+        tool_choice="auto", max_tokens=4096,
     )
 
 print(response.choices[0].message.content)
@@ -393,112 +322,128 @@ print(response.choices[0].message.content)
 
 ---
 
-## Vision Workflows (Multimodal Agents)
+## Reference: Vision (Multimodal)
 
-Both Gemma 4 and Qwen3.5/3.6 support image input:
+Both Gemma 4 and Qwen3.5/3.6 support image input when served with an mmproj:
 
 ```python
 import base64
 
-def encode_image(path: str) -> str:
-    with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
-
-def analyze_image(image_path: str, question: str, model: str = "gemma4") -> str:
-    b64 = encode_image(image_path)
+def analyze_image(image_path: str, question: str, model: str = "qwen3.6-27b") -> str:
+    with open(image_path, "rb") as f:
+        b64 = base64.b64encode(f.read()).decode()
     response = client.chat.completions.create(
         model=model,
         messages=[{
             "role": "user",
             "content": [
-                {
-                    "type": "image_url",
-                    "image_url": {"url": f"data:image/png;base64,{b64}"}
-                },
-                {"type": "text", "text": question}
-            ]
+                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
+                {"type": "text", "text": question},
+            ],
         }],
         max_tokens=2048,
         temperature=1.0,
     )
     return response.choices[0].message.content
 
-# Usage
-result = analyze_image(
-    "screenshot.png",
-    "Identify all UI elements and describe their purpose."
-)
+result = analyze_image("screenshot.png", "Identify all UI elements and describe their purpose.")
 print(result)
 ```
 
 ---
 
-## Serverless / Background Process Pattern
-
-For agent workflows that need the model server always available:
+## Reference: Background Server Process
 
 ```bash
-# Start server in background (nohup keeps it alive after shell exit)
-nohup ./llama.cpp/llama-server \
-  --model ./models/qwen3.6-35b/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf \
-  --alias "qwen3.6" \
-  --ctx-size 16384 \
-  -n 999 -fa \
+# Start server in background (persists after shell exit)
+nohup llama-server \
+  -hf unsloth/Qwen3.6-27B-GGUF:Q4_K_M \
+  --alias "qwen3.6-27b" \
+  --ctx-size 32768 \
+  --n-gpu-layers 999 \
   --parallel 4 --cont-batching \
+  --jinja --reasoning on \
   --chat-template-kwargs '{"enable_thinking":true}' \
   --port 8001 \
-  > ./logs/llama-server.log 2>&1 &
-
+  > ./llama-server.log 2>&1 &
 echo "Server PID: $!"
 ```
 
 Health check:
 
 ```bash
-curl -s http://localhost:8001/health
-# {"status":"ok"}
-
-# List loaded models
+curl -s http://localhost:8001/health      # {"status":"ok"}
 curl -s http://localhost:8001/v1/models | python3 -m json.tool
 ```
 
 ---
 
-## Model Selection Guide for Agent Tasks
+## Reference: Model Selection by Task
 
 ![Agent Model Selector — Decision Schematic](diagrams/rendered/agent_model_selector.png)
 
-| Task Type | Best Model | Thinking Mode | Temperature |
-|-----------|-----------|--------------|-------------|
-| Code generation (precise) | **Qwen3.6-27B** or Qwen3.6-35B-A3B | On | 0.6 |
-| Code review / debugging | **Qwen3.6-27B** or Qwen3.6-35B-A3B | On | 0.6 |
-| Agentic coding (16 GB VRAM) | **Qwen3.6-27B** | On | 0.6 |
+| Task | Best Model | Thinking | Temperature |
+|------|-----------|----------|-------------|
+| Code generation (precise) | **Qwen3.6-27B** or 35B-A3B | On | 0.6 |
+| Agentic coding, 16 GB VRAM | **Qwen3.6-27B** | On | 0.6 |
 | General reasoning | Gemma 4 26B-A4B or 31B | On | 1.0 |
 | Multi-step planning | Qwen3.6-27B or Gemma 4 31B | On | 1.0 |
-| Document/image analysis | Gemma 4 26B-A4B | Optional | 1.0 |
-| Fast responses / high volume | Gemma 4 E4B | Off | 1.0 |
-| Edge / offline-only | Gemma 4 E2B | Off | 1.0 |
+| Document / image analysis | Gemma 4 26B-A4B | Optional | 1.0 |
+| Fast, high-volume | Gemma 4 E4B | Off | 1.0 |
+| Edge / offline | Gemma 4 E2B | Off | 1.0 |
 | Structured JSON extraction | Any | Off | 0.0–0.3 |
 
 ---
 
-## Context Length Planning
+## Reference: Context Length Planning
 
-| Backend | Practical Max | KV Cache Trade-off |
-|---------|-------------|-------------------|
-| llama-server | 128K (with -fa and q8 KV) | Each slot costs `ctx × layers × d_model × 2 × dtype` |
-| Ollama | 32K default; up to 128K with Modelfile | Increase `num_ctx` carefully |
+| Backend | Practical max | Notes |
+|---------|-------------|-------|
+| llama-server | 128K (with flash-attn + q8 KV) | Each slot costs `ctx × layers × d_model × 2 × dtype` |
+| Ollama | 32K default; up to 128K via Modelfile | Increase `num_ctx` carefully |
 | vLLM | Up to 262K (Qwen3.x), 256K (Gemma 4) | Reduce `--max-model-len` to free KV cache for batching |
 | LM Studio | Up to model max; set in Developer tab | Higher context = slower TTFT |
 
-For agentic coding tasks, 32K is usually sufficient. For document analysis (long files), 64K–128K is more appropriate. Don't set context higher than needed — it costs VRAM and increases latency.
+For agentic coding, 32K is usually sufficient. For document analysis, 64K–128K is appropriate.
 
 ---
 
-## Checking Server Health
+## Reference: Local → Cloud Fallback Pattern
+
+![Local / Cloud Fallback — Flow Schematic](diagrams/rendered/local_cloud_fallback.png)
+
+```python
+import os
+from openai import OpenAI
+
+LOCAL_URL   = "http://localhost:8001/v1"
+LOCAL_MODEL = "qwen3.6-27b"
+CLOUD_MODEL = "gpt-4o"
+
+def get_client():
+    try:
+        c = OpenAI(base_url=LOCAL_URL, api_key="not-needed")
+        c.models.list()   # quick probe
+        return c, LOCAL_MODEL
+    except Exception:
+        return OpenAI(api_key=os.environ["OPENAI_API_KEY"]), CLOUD_MODEL
+
+client, model = get_client()
+response = client.chat.completions.create(
+    model=model,
+    messages=[{"role": "user", "content": "Hello"}],
+)
+print(f"Using: {model}")
+print(response.choices[0].message.content)
+```
+
+---
+
+## Reference: Server Health Check
 
 ```python
 import httpx
+from openai import OpenAI
 
 def check_local_llm(base_url: str = "http://localhost:8001") -> bool:
     try:
@@ -507,44 +452,12 @@ def check_local_llm(base_url: str = "http://localhost:8001") -> bool:
     except Exception:
         return False
 
-def get_available_models(base_url: str = "http://localhost:8001") -> list[str]:
-    client = OpenAI(base_url=f"{base_url}/v1", api_key="none")
-    return [m.id for m in client.models.list().data]
+def get_models(base_url: str = "http://localhost:8001") -> list[str]:
+    c = OpenAI(base_url=f"{base_url}/v1", api_key="not-needed")
+    return [m.id for m in c.models.list().data]
 
 if check_local_llm():
-    print("Local LLM is up:", get_available_models())
+    print("Local LLM is up:", get_models())
 else:
     print("Local LLM not running — falling back to cloud")
-```
-
----
-
-## Fallback Pattern (local → cloud)
-
-![Local / Cloud Fallback — Flow Schematic](diagrams/rendered/local_cloud_fallback.png)
-
-```python
-import os
-from openai import OpenAI
-
-LOCAL_URL = "http://localhost:8001/v1"
-LOCAL_MODEL = "qwen3.6"
-CLOUD_MODEL = "gpt-4o"
-
-def get_client_and_model():
-    """Return (client, model) — prefer local, fall back to OpenAI cloud."""
-    try:
-        local = OpenAI(base_url=LOCAL_URL, api_key="none")
-        local.models.list()  # quick probe
-        return local, LOCAL_MODEL
-    except Exception:
-        return OpenAI(api_key=os.environ["OPENAI_API_KEY"]), CLOUD_MODEL
-
-client, model = get_client_and_model()
-response = client.chat.completions.create(
-    model=model,
-    messages=[{"role": "user", "content": "Hello"}],
-)
-print(f"Using: {model}")
-print(response.choices[0].message.content)
 ```

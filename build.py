@@ -23,6 +23,36 @@ REPO_URL     = "https://github.com/kenotron-ms/llm-guides"
 SRC_DIR      = Path(".")
 DIST_DIR     = Path("dist")
 
+
+PICKER_HTML = (
+    '<div class="path-picker" id="path-picker">'
+    '<span class="picker-label">Showing for</span>'
+    '<div class="picker-group">'
+    '<span class="picker-group-name">Hardware</span>'
+    '<div class="picker-pills">'
+    '<button class="picker-pill" data-dim="hardware" data-val="cuda">NVIDIA</button>'
+    '<button class="picker-pill" data-dim="hardware" data-val="rocm">AMD</button>'
+    '<button class="picker-pill" data-dim="hardware" data-val="apple">Apple Silicon</button>'
+    '</div></div>'
+    '<span class="picker-group-sep">&middot;</span>'
+    '<div class="picker-group">'
+    '<span class="picker-group-name">Backend</span>'
+    '<div class="picker-pills">'
+    '<button class="picker-pill" data-dim="backend" data-val="ollama">Ollama</button>'
+    '<button class="picker-pill" data-dim="backend" data-val="llamacpp">llama-server</button>'
+    '<button class="picker-pill" data-dim="backend" data-val="vllm">vLLM</button>'
+    '<button class="picker-pill" data-dim="backend" data-val="lmstudio">LM Studio</button>'
+    '</div></div>'
+    '</div>'
+)
+
+GUIDE_SLUGS = {"agent-integration"}
+GUIDE_PREFIXES = ("backends/", "hardware/")
+
+def is_guide_page(slug: str) -> bool:
+    return slug in GUIDE_SLUGS or any(slug.startswith(p) for p in GUIDE_PREFIXES)
+
+
 NAV = [
     {
         "section": "Getting Started",
@@ -421,6 +451,67 @@ CSS = """
       .prose thead th,.prose tbody td{padding:7px 10px}
       .page-nav{flex-direction:column}
     }
+
+    /* ─── Path Picker (Pattern A) ─────────────────────────────────────────────── */
+    .path-picker{
+      position:sticky;top:var(--hdr-h);z-index:85;
+      background:rgba(255,255,255,.97);backdrop-filter:blur(8px);
+      border-bottom:1px solid var(--border);
+      padding:8px 40px;
+      display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    }
+    .picker-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);white-space:nowrap}
+    .picker-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+    .picker-group-sep{color:var(--border-mid);font-size:18px;line-height:1;flex-shrink:0}
+    .picker-group-name{font-size:11px;font-weight:600;color:var(--fg-3);text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+    .picker-pills{display:flex;gap:4px;flex-wrap:wrap}
+    .picker-pill{
+      font-size:12.5px;font-weight:500;padding:3px 11px;border-radius:20px;
+      border:1px solid var(--border-mid);background:var(--bg);color:var(--fg-2);
+      cursor:pointer;transition:.1s;white-space:nowrap;font-family:var(--font);
+    }
+    .picker-pill:hover{border-color:var(--accent);color:var(--accent)}
+    .picker-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
+    @media(max-width:860px){.path-picker{padding:8px 16px;gap:10px}}
+
+    /* ─── Stepper (Pattern B) ────────────────────────────────────────────────── */
+    .step-progress-bar{height:3px;background:var(--border);border-radius:2px;margin-bottom:32px;overflow:hidden}
+    .step-progress-fill{height:100%;background:var(--accent);border-radius:2px;width:0%;transition:width .4s ease}
+    .step-summary{display:none;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+    .step-summary.visible{display:flex}
+    .step-done-icon{
+      width:18px;height:18px;border-radius:50%;
+      background:var(--accent);color:#fff;
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;flex-shrink:0;
+    }
+    .step-done-title{font-size:13.5px;font-weight:500;color:var(--fg-2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .step-redo-btn{
+      background:none;border:1px solid var(--border-mid);border-radius:4px;
+      padding:2px 8px;font-size:11px;font-family:var(--font);
+      color:var(--fg-3);cursor:pointer;transition:.1s;white-space:nowrap;flex-shrink:0;
+    }
+    .step-redo-btn:hover{color:var(--accent);border-color:var(--accent)}
+    .step-body.hidden{display:none}
+    .step-label{
+      display:flex;align-items:center;gap:8px;margin-bottom:10px;
+      font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);
+    }
+    .step-badge{
+      display:inline-flex;align-items:center;justify-content:center;
+      width:20px;height:20px;border-radius:50%;
+      background:var(--accent);color:#fff;font-size:10px;font-weight:700;flex-shrink:0;
+    }
+    .step-next-btn{
+      display:inline-flex;align-items:center;gap:8px;
+      margin:28px 0 40px;padding:10px 20px;
+      background:var(--accent);color:#fff;border:none;
+      border-radius:var(--r-lg);font-size:14px;font-weight:500;
+      font-family:var(--font);cursor:pointer;transition:.1s;
+    }
+    .step-next-btn:hover{background:var(--accent-hi)}
+    .step-next-btn.step-final{background:var(--bg-raised);color:var(--accent);border:1px solid rgba(37,99,235,.3)}
+    .step-next-btn.step-final:hover{background:var(--accent-lo)}
 """.strip()
 
 # ─── JavaScript ───────────────────────────────────────────────────────────────
@@ -581,6 +672,132 @@ function renderResults(q){
   }).join('');
 }
 
+
+
+    /* ─── Path Picker — Pattern A ─────────────────────────────────────────── */
+    var PP_KEY='llmg.prefs';
+    var pprefs=(function(){try{return JSON.parse(localStorage.getItem(PP_KEY)||'{}');}catch(e){return {};}})();
+    function ppSave(){localStorage.setItem(PP_KEY,JSON.stringify(pprefs));}
+    function ppApply(){
+      document.querySelectorAll('.picker-pill').forEach(function(p){
+        p.classList.toggle('active',pprefs[p.dataset.dim]===p.dataset.val);
+      });
+      document.querySelectorAll('[data-when]').forEach(function(el){
+        var conds=el.dataset.when.split(' ');
+        var anySet=conds.some(function(c){return pprefs[c.split(':')[0]];});
+        if(!anySet){el.style.display='';return;}
+        var match=conds.every(function(c){var p=c.split(':');return !pprefs[p[0]]||pprefs[p[0]]===p[1];});
+        el.style.display=match?'':'none';
+      });
+    }
+    var ppEl=document.getElementById('path-picker');
+    if(ppEl){
+      ppEl.querySelectorAll('.picker-pill').forEach(function(pill){
+        pill.addEventListener('click',function(){
+          var dim=pill.dataset.dim,val=pill.dataset.val;
+          pprefs[dim]=(pprefs[dim]===val)?null:val;
+          if(pprefs[dim]===null)delete pprefs[dim];
+          ppSave();ppApply();
+        });
+      });
+      ppApply();
+    }
+
+    /* ─── Stepper — Pattern B ─────────────────────────────────────────────── */
+    (function(){
+      var prose=document.querySelector('.prose');
+      if(!prose)return;
+      var stepH2s=Array.from(prose.querySelectorAll('h2')).filter(function(h){
+        return /^Step\s*\d+/i.test(h.textContent.trim());
+      });
+      if(stepH2s.length<1)return;
+
+      var PAGE_KEY='llmg.step.'+location.pathname;
+      var done={};try{done=JSON.parse(localStorage.getItem(PAGE_KEY)||'{}');}catch(e){}
+
+      /* collect nodes per step */
+      var steps=stepH2s.map(function(h,i){
+        var nodes=[],node=h.nextSibling,stop=stepH2s[i+1]||null;
+        while(node&&node!==stop){nodes.push(node);node=node.nextSibling;}
+        return{num:i+1,heading:h,title:h.textContent.trim(),bodyNodes:nodes};
+      });
+
+      /* progress bar */
+      var bar=document.createElement('div');
+      bar.className='step-progress-bar';
+      bar.innerHTML='<div class="step-progress-fill"></div>';
+      stepH2s[0].parentNode.insertBefore(bar,stepH2s[0]);
+
+      /* wrap each step */
+      steps.forEach(function(step,i){
+        var wrapper=document.createElement('div');
+        wrapper.className='step-wrapper';
+        wrapper.dataset.step=step.num;
+
+        /* summary (done state) */
+        var summary=document.createElement('div');
+        summary.className='step-summary';
+        summary.innerHTML=
+          '<div class="step-done-icon">\u2713</div>'+
+          '<span class="step-done-title">'+step.title+'</span>'+
+          '<button class="step-redo-btn" data-step="'+step.num+'">Redo</button>';
+
+        /* body */
+        var body=document.createElement('div');
+        body.className='step-body';
+        var label=document.createElement('div');
+        label.className='step-label';
+        label.innerHTML='<span class="step-badge">'+step.num+'</span>Step '+step.num+' of '+steps.length;
+        body.appendChild(label);
+        body.appendChild(step.heading);
+        step.bodyNodes.forEach(function(n){body.appendChild(n);});
+
+        /* next/done button */
+        var btn=document.createElement('button');
+        btn.className='step-next-btn'+(i===steps.length-1?' step-final':'');
+        btn.dataset.step=step.num;
+        btn.innerHTML=i<steps.length-1
+          ?'Done \u2014 '+steps[i+1].title+' \u2192'
+          :'\u2713 Setup complete';
+        body.appendChild(btn);
+
+        wrapper.appendChild(summary);
+        wrapper.appendChild(body);
+        step.heading.parentNode.insertBefore(wrapper,step.heading);
+      });
+
+      function updateDisplay(){
+        var count=Object.values(done).filter(Boolean).length;
+        var fill=document.querySelector('.step-progress-fill');
+        if(fill)fill.style.width=Math.round(count/steps.length*100)+'%';
+        steps.forEach(function(step){
+          var w=document.querySelector('.step-wrapper[data-step="'+step.num+'"]');
+          if(!w)return;
+          var isDone=!!done[step.num];
+          w.querySelector('.step-summary').classList.toggle('visible',isDone);
+          w.querySelector('.step-body').classList.toggle('hidden',isDone);
+        });
+      }
+
+      document.addEventListener('click',function(e){
+        var nextBtn=e.target.closest&&e.target.closest('.step-next-btn');
+        if(nextBtn){
+          var n=parseInt(nextBtn.dataset.step);
+          done[n]=true;localStorage.setItem(PAGE_KEY,JSON.stringify(done));
+          updateDisplay();
+          var nxt=document.querySelector('.step-wrapper[data-step="'+(n+1)+'"]');
+          if(nxt)setTimeout(function(){nxt.scrollIntoView({behavior:'smooth',block:'start'});},60);
+        }
+        var redoBtn=e.target.closest&&e.target.closest('.step-redo-btn');
+        if(redoBtn){
+          delete done[parseInt(redoBtn.dataset.step)];
+          localStorage.setItem(PAGE_KEY,JSON.stringify(done));
+          updateDisplay();
+        }
+      });
+
+      updateDisplay();
+    })();
 })();
 """.strip()
 
@@ -663,6 +880,7 @@ def render_page(page: dict, content_html: str, toc_tokens, search_index: list) -
     bc_html      = build_breadcrumb(page, slug)
     pnav_html    = build_page_nav(page, slug)
     search_json  = json.dumps(search_index, ensure_ascii=False)
+    path_picker_html = PICKER_HTML if is_guide_page(slug) else ""
     js_code      = JS_TEMPLATE.replace("__SEARCH_INDEX__", search_json)
 
     return f"""<!DOCTYPE html>
@@ -721,6 +939,7 @@ def render_page(page: dict, content_html: str, toc_tokens, search_index: list) -
 <!-- Main layout -->
 <div class="layout">
   <div class="content-wrap">
+    {path_picker_html}
     <main class="content">
       <div class="breadcrumb">{bc_html}</div>
       <article class="prose">
@@ -760,7 +979,20 @@ def render_page(page: dict, content_html: str, toc_tokens, search_index: list) -
 </body>
 </html>"""
 
-# ─── Markdown processor ───────────────────────────────────────────────────────
+    # ─── Markdown processor ───────────────────────────────────────────────────────
+
+def post_process_when_blocks(html: str) -> str:
+    """Wrap <!-- when:dim=val --> ... <!-- /when --> pairs in data-when divs."""
+    def _replace(m):
+        raw = m.group(1).strip()
+        conds = ' '.join(c.strip().replace('=', ':') for c in raw.split(','))
+        return f'<div data-when="{conds}">' + m.group(2) + '</div>'
+    return re.sub(
+        r'<!--\s*when:([^-]+?)\s*-->(.*?)<!--\s*/when\s*-->',
+        _replace, html, flags=re.DOTALL
+    )
+
+
 def process_markdown(md_text: str, src_file: str):
     """Returns (content_html, toc_tokens, plain_text, headings)"""
     # Fix relative image paths: strip leading ../ levels for files in subdirs
@@ -776,6 +1008,7 @@ def process_markdown(md_text: str, src_file: str):
     )
     html = processor.convert(md_text)
     html = fix_md_links(html)
+    html = post_process_when_blocks(html)
     toc_tokens = getattr(processor, "toc_tokens", [])
 
     # Extract headings for search
@@ -783,6 +1016,7 @@ def process_markdown(md_text: str, src_file: str):
     plain    = strip_md(md_text)
 
     return html, toc_tokens, plain, headings
+
 
 # ─── Build search index ───────────────────────────────────────────────────────
 def build_search_index(entries: list, from_slug: str) -> list:
