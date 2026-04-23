@@ -749,8 +749,6 @@ function renderResults(q){
         label.className='step-label';
         label.innerHTML='<span class="step-badge">'+step.num+'</span>Step '+step.num+' of '+steps.length;
         body.appendChild(label);
-        body.appendChild(step.heading);
-        step.bodyNodes.forEach(function(n){body.appendChild(n);});
 
         /* next/done button */
         var btn=document.createElement('button');
@@ -759,11 +757,16 @@ function renderResults(q){
         btn.innerHTML=i<steps.length-1
           ?'Done \u2014 '+steps[i+1].title+' \u2192'
           :'\u2713 Setup complete';
-        body.appendChild(btn);
 
         wrapper.appendChild(summary);
         wrapper.appendChild(body);
+
+        /* insert wrapper FIRST (while heading.parentNode still points to .prose),
+           then move heading + body nodes into step-body */
         step.heading.parentNode.insertBefore(wrapper,step.heading);
+        body.appendChild(step.heading);
+        step.bodyNodes.forEach(function(n){body.appendChild(n);});
+        body.appendChild(btn);
       });
 
       function updateDisplay(){
