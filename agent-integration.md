@@ -19,9 +19,34 @@ This guide explains how to configure **Amplifier agents** (and any OpenAI-SDK-co
 
 Pick one backend and start it before configuring agents.
 
+### Recommended for Agents: llama-server (Qwen3.6-27B)
+
+Best all-round choice — flagship-level agentic coding in a 27B dense model, fits a single 16 GB VRAM GPU, native tool calling, thinking mode:
+
+```bash
+llama-server \
+  -hf unsloth/Qwen3.6-27B-GGUF:Q4_K_M \
+  --alias "qwen3.6-27b" \
+  --ctx-size 65536 \
+  --n-gpu-layers 999 \
+  --cache-ram 4096 \
+  --flash-attn \
+  --temp 0.6 \
+  --top-p 0.95 \
+  --top-k 20 \
+  --min-p 0.0 \
+  --presence-penalty 0.0 \
+  --parallel 4 \
+  --cont-batching \
+  --jinja \
+  --reasoning on \
+  --chat-template-kwargs '{"enable_thinking":true}' \
+  --port 8001
+```
+
 ### Recommended for Agents: llama-server (Qwen3.6-35B-A3B)
 
-Best for coding agents — highest SWE-bench score in its compute class, native tool calling, thinking mode:
+Best when 24 GB VRAM is available — MoE model with 3B active params, excellent SWE-bench score, native vision:
 
 ```bash
 ./llama.cpp/llama-server \
@@ -85,45 +110,131 @@ vllm serve Qwen/Qwen3.6-35B-A3B \
 
 ---
 
-## Connecting Amplifier Agents
+## Configuring Amplifier
 
-Amplifier agents use the `openai` SDK under the hood and respect `base_url` / `api_key` overrides. Configure in your `.amplifier/config.yaml` or environment:
+The `provider-chat-completions` module ships pre-installed with `amplifier-app-cli` — no bundle install or `module add` needed. It speaks the OpenAI Chat Completions wire format, so it works with any backend that serves `/v1/chat/completions`.
 
-### Environment Variables
+### Interactive setup with `amplifier provider manage`
 
 ```bash
-# Point agent at local llama-server
-export OPENAI_BASE_URL="http://localhost:8001/v1"
-export OPENAI_API_KEY="none"
-export OPENAI_MODEL="qwen3.6"
+amplifier provider manage
+# or: amplifier provider manage --global   (writes to ~/.amplifier/settings.yaml)
+# or: amplifier provider manage --project  (writes to .amplifier/settings.yaml, committed)
+# or: amplifier provider manage --local    (writes to .amplifier/settings.local.yaml, gitignored)
 ```
 
-### .amplifier/config.yaml (provider_preferences)
+The wizard will ask for:
+1. **Provider type** — select **"OpenAI-Compatible (self-hosted)"**
+2. **Base URL** — your server's `/v1` endpoint (see table below)
+3. **Model name** — the exact identifier your server expects
+4. **API key** — enter `not-needed` for unauthenticated local servers
+
+| Backend | Base URL | Model name |
+|---------|----------|-----------|
+| llama-server | `http://localhost:8001/v1` | `default` (or your `--alias` value) |
+| Ollama | `http://localhost:11434/v1` | exact name from `ollama list` (e.g. `qwen3.6:27b`) |
+| vLLM | `http://localhost:8000/v1` | HuggingFace ID matching your `--model` arg |
+| LM Studio | `http://localhost:1234/v1` | shown in Developer tab |
+
+After the wizard completes, secrets go to `~/.amplifier/keys.env` and the provider config is written to your chosen settings file. Verify it worked:
+
+```bash
+amplifier provider current
+```
+
+### What the config looks like
+
+**`~/.amplifier/settings.yaml`** (written by the wizard):
+```yaml
+config:
+  providers:
+    - module: provider-chat-completions
+      source: git+https://github.com/microsoft/amplifier-module-provider-chat-completions@main
+      config:
+        base_url: ${CHAT_COMPLETIONS_BASE_URL}
+        default_model: default
+        priority: 10
+```
+
+**`~/.amplifier/keys.env`** (secrets, never committed):
+```bash
+CHAT_COMPLETIONS_BASE_URL=http://localhost:8001/v1
+```
+
+### Key config fields
+
+| Field | Default | Notes |
+|-------|---------|-------|
+| `base_url` | *(required)* | Full URL including `/v1`. Missing = provider silently skips, no crash. |
+| `default_model` | *(required)* | Passed in every request. For llama-server, any string works. |
+| `api_key` | `not-needed` | Omit or use empty string for unauthenticated servers. |
+| `priority` | `100` | Lower = higher priority. Use `10` to prefer local over cloud fallbacks. |
+| `timeout` | `300.0` | Increase for slow hardware or large context. |
+| `parallel_tool_calls` | `true` | Set `false` for Ollama models that don't support parallel tool calls. |
+| `temperature` | `0.7` | Override per-provider default. |
+| `max_tokens` | `4096` | Override per-provider default. |
+
+### Routing local models by task type
+
+Amplifier agents declare `model_role` in their frontmatter (e.g. `model_role: coding`). You can route specific roles to your local model without touching agent code:
+
+**Option A — per-project overrides in settings.yaml:**
+```yaml
+# .amplifier/settings.yaml
+routing:
+  matrix: balanced       # start from the built-in balanced matrix
+  overrides:
+    coding:
+      - provider: chat-completions
+        model: default   # or your vLLM HuggingFace ID
+    fast:
+      - provider: chat-completions
+        model: default
+      - base             # fall back to balanced matrix candidates if local is down
+```
+
+The `base` keyword appends the matrix's original candidates after your local overrides. Without it, your list completely replaces them.
+
+**Option B — multi-instance with named IDs:**
+
+When running multiple local servers simultaneously, assign each an `id:` and reference it in routing:
 
 ```yaml
-model_providers:
-  - name: local-llm
-    base_url: "http://localhost:8001/v1"
-    api_key: "none"
-    models:
-      - pattern: "qwen3.6*"
-        model: "qwen3.6"
-      - pattern: "gemma4*"
-        model: "gemma4"
+# ~/.amplifier/settings.yaml
+config:
+  providers:
+    - module: provider-chat-completions
+      id: vllm-local
+      source: git+https://github.com/microsoft/amplifier-module-provider-chat-completions@main
+      config:
+        base_url: http://localhost:8000/v1
+        default_model: Qwen/Qwen3.6-27B
+        priority: 10
+
+    - module: provider-chat-completions
+      id: ollama-local
+      source: git+https://github.com/microsoft/amplifier-module-provider-chat-completions@main
+      config:
+        base_url: http://localhost:11434/v1
+        default_model: "qwen3.6:27b"
+        priority: 20
+        parallel_tool_calls: false
+
+routing:
+  matrix: balanced
+  overrides:
+    coding:
+      - provider: vllm-local
+        model: Qwen/Qwen3.6-27B
+    fast:
+      - provider: ollama-local
+        model: "qwen3.6:27b"
+      - base
 ```
 
-When delegating to agents, specify provider preferences:
+**Scope precedence:** `local` overrides `project` overrides `global`. Use `--global` for personal machine-wide config, `--project` for team-shared endpoints, `--local` for per-developer overrides without affecting teammates.
 
-```python
-delegate(
-    agent="foundation:explorer",
-    instruction="Analyze the codebase",
-    provider_preferences=[{
-        "provider": "local-llm",
-        "model": "qwen3.6"
-    }]
-)
-```
+> **Note:** The `provider-chat-completions` module handles only transport (HTTP + tool call marshalling + retries). You still need a base bundle for tools, the orchestrator, and agents — `foundation` or `exp-lean-foundation` (more token-efficient, better for smaller context windows).
 
 ---
 
@@ -359,10 +470,11 @@ curl -s http://localhost:8001/v1/models | python3 -m json.tool
 
 | Task Type | Best Model | Thinking Mode | Temperature |
 |-----------|-----------|--------------|-------------|
-| Code generation (precise) | Qwen3.6-35B-A3B | On | 0.6 |
-| Code review / debugging | Qwen3.6-35B-A3B | On | 0.6 |
+| Code generation (precise) | **Qwen3.6-27B** or Qwen3.6-35B-A3B | On | 0.6 |
+| Code review / debugging | **Qwen3.6-27B** or Qwen3.6-35B-A3B | On | 0.6 |
+| Agentic coding (16 GB VRAM) | **Qwen3.6-27B** | On | 0.6 |
 | General reasoning | Gemma 4 26B-A4B or 31B | On | 1.0 |
-| Multi-step planning | Qwen3.6 or Gemma 4 31B | On | 1.0 |
+| Multi-step planning | Qwen3.6-27B or Gemma 4 31B | On | 1.0 |
 | Document/image analysis | Gemma 4 26B-A4B | Optional | 1.0 |
 | Fast responses / high volume | Gemma 4 E4B | Off | 1.0 |
 | Edge / offline-only | Gemma 4 E2B | Off | 1.0 |
