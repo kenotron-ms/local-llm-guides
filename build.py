@@ -46,11 +46,9 @@ PICKER_HTML = (
     '</div>'
 )
 
-GUIDE_SLUGS = {"agent-integration"}
-GUIDE_PREFIXES = ("backends/", "hardware/")
-
 def is_guide_page(slug: str) -> bool:
-    return slug in GUIDE_SLUGS or any(slug.startswith(p) for p in GUIDE_PREFIXES)
+    """Only show path picker on pages that actually have data-when content."""
+    return slug == "agent-integration"
 
 
 NAV = [
