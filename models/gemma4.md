@@ -132,7 +132,7 @@ You are a helpful assistant.
 ### Download GGUF
 
 ```bash
-pip install huggingface_hub hf_transfer
+uv pip install huggingface_hub hf_transfer
 
 # E4B — 8-bit (best quality for small model)
 hf download unsloth/gemma-4-E4B-it-GGUF \

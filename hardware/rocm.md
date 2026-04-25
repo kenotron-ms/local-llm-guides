@@ -174,13 +174,13 @@ load_tensors: ROCm0 model buffer size = 18000 MiB
 
 ## Step 4 — vLLM with ROCm (MI300X+ only)
 
-### pip install
+### uv install
 
 ```bash
-python3.12 -m venv .venv
+uv venv .venv --python 3.12
 source .venv/bin/activate
 
-pip install vllm --pre \
+uv pip install vllm --pre \
   --extra-index-url https://wheels.vllm.ai/rocm/nightly/rocm721 \
   --upgrade
 ```

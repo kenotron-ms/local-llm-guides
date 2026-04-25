@@ -126,7 +126,7 @@ copy build\bin\Release\llama-*.exe .
 ### Via Hugging Face CLI (recommended)
 
 ```bash
-pip install huggingface_hub hf_transfer
+uv pip install huggingface_hub hf_transfer
 
 # Set a cache directory
 export LLAMA_CACHE="./models"

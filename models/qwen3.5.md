@@ -93,7 +93,7 @@ presence_penalty = 1.5
 ## Downloading GGUF Models
 
 ```bash
-pip install huggingface_hub hf_transfer
+uv pip install huggingface_hub hf_transfer
 
 # 27B — 4-bit (recommended for 16 GB VRAM)
 hf download unsloth/Qwen3.5-27B-Instruct-GGUF \

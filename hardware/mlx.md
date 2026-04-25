@@ -148,7 +148,7 @@ source ~/.unsloth/unsloth_gemma4_mlx/bin/activate
 ### Manual Install (if needed)
 
 ```bash
-pip install mlx mlx-vlm
+uv pip install mlx mlx-vlm
 ```
 
 ### MLX Model Variants (Unsloth Dynamic)

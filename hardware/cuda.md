@@ -147,7 +147,7 @@ nvidia-smi
 CUDA is the primary target:
 
 ```bash
-pip install vllm
+uv pip install vllm
 
 # Verify
 python3 -c "import vllm; print('vLLM OK')"

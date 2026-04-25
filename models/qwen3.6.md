@@ -92,7 +92,7 @@ repeat_penalty     = 1.0
 #### Download GGUF
 
 ```bash
-pip install huggingface_hub
+uv pip install huggingface_hub
 
 # Q4 (recommended, 16-17 GB)
 huggingface-cli download unsloth/Qwen3.6-27B-GGUF \
@@ -182,7 +182,7 @@ vllm serve Qwen/Qwen3.6-27B \
 
 ```bash
 # Via mlx-lm
-pip install mlx-lm
+uv pip install mlx-lm
 
 mlx_lm.generate \
   --model mlx-community/Qwen3.6-27B-4bit \
@@ -350,7 +350,7 @@ print(response.choices[0].message.content)
 #### Download GGUF
 
 ```bash
-pip install huggingface_hub hf_transfer
+uv pip install huggingface_hub hf_transfer
 
 # 4-bit + vision projector
 hf download unsloth/Qwen3.6-35B-A3B-GGUF \

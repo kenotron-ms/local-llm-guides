@@ -31,28 +31,28 @@
 ## Installation
 
 <!-- when:os=linux -->
-### NVIDIA CUDA (pip)
+### NVIDIA CUDA (uv)
 
 ```bash
-python3.12 -m venv .venv && source .venv/bin/activate
+uv venv .venv --python 3.12 && source .venv/bin/activate
 
 # Latest nightly (CUDA 12.9)
-pip install -U vllm --pre \
+uv pip install -U vllm --pre \
   --extra-index-url https://wheels.vllm.ai/nightly/cu129 \
   --extra-index-url https://download.pytorch.org/whl/cu129 \
   --index-strategy unsafe-best-match
 
 # Stable release (CUDA 12.8)
-pip install vllm
+uv pip install vllm
 ```
 
-### AMD ROCm (pip) — MI300X+ only
+### AMD ROCm (uv) — MI300X+ only
 
 > Requires Python 3.12, ROCm 7.2.1, glibc ≥ 2.35 (Ubuntu 22.04+)
 
 ```bash
-python3.12 -m venv .venv && source .venv/bin/activate
-pip install vllm --pre \
+uv venv .venv --python 3.12 && source .venv/bin/activate
+uv pip install vllm --pre \
   --extra-index-url https://wheels.vllm.ai/rocm/nightly/rocm721 \
   --upgrade
 ```
@@ -80,7 +80,7 @@ docker run --runtime=nvidia --gpus all -p 8000:8000 \
   vllm/vllm-openai:latest --model google/gemma-4-E4B-it
 ```
 
-For native Windows pip install, see the [vLLM Windows docs](https://docs.vllm.ai/en/latest/getting_started/installation/gpu/index.html).
+For native Windows uv install, see the [vLLM Windows docs](https://docs.vllm.ai/en/latest/getting_started/installation/gpu/index.html).
 <!-- /when -->
 
 <!-- when:os=mac -->
