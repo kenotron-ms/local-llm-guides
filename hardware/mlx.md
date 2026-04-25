@@ -148,6 +148,7 @@ source ~/.unsloth/unsloth_gemma4_mlx/bin/activate
 ### Manual Install (if needed)
 
 ```bash
+uv venv .venv && source .venv/bin/activate
 uv pip install mlx mlx-vlm
 ```
 

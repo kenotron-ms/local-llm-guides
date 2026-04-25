@@ -32,7 +32,8 @@ The 27B dense is the standout drop. A 55.6 GB BF16 model that outperforms the 80
 
 | Quantization | Total Memory | Notes |
 |-------------|-------------|-------|
-| Q3_K_M | ~13 GB | Fits 12 GB VRAM; noticeable quality drop |
+| IQ3_XXS | ~12 GB | Memory-tight pick; best accuracy-per-byte for <12 GB VRAM |
+| Q3_K_M | ~13 GB | Fits 12 GB VRAM; modest quality drop |
 | Q4_K_M | ~17 GB | **Sweet spot** — fits 16 GB VRAM; reduce `--ctx-size` if OOM |
 | Q6_K | ~22 GB | Excellent quality, needs 24 GB VRAM |
 | Q8_0 | ~29 GB | Near-lossless, needs 32 GB+ |
@@ -55,11 +56,16 @@ The 27B dense is the standout drop. A 55.6 GB BF16 model that outperforms the 80
 
 ### Architecture Highlights
 
-- **Dense transformer** — all 27B parameters are active every forward pass (no expert routing overhead)
-- **Hybrid thinking** — toggle reasoning chains on/off per request via chat template kwargs
-- **Long context** — 262K native; extensible to 1M via YaRN rope scaling
+- **Hybrid Gated DeltaNet** — 3 of every 4 sublayers use O(n) linear attention; only every 4th sublayer is full attention. Makes 256K–1M context materially cheaper to serve than Qwen3.5
+- **Multi-Token Prediction (MTP)** — enables speculative decoding for higher throughput when the runtime supports it
+- **Dense transformer** — all 27B parameters active every forward pass (no expert routing overhead)
+- **Hybrid thinking** — toggle reasoning chains on/off per request via `enable_thinking`; the `/think`/`/nothink` inline tags from Qwen3.5 are removed
+- **Thinking preservation** — new `preserve_thinking: true` flag retains reasoning traces across turns, useful for multi-turn agent loops
+- **Long context** — 262K native; 1M via YaRN. Qwen team recommends **at least 128K context** for full thinking quality
 - **Tool calling** — improved nested object parsing for agentic scaffolds; `developer` role support
 - **201 languages** — multilingual instruction following
+
+> **Runtime note:** The Hybrid Gated DeltaNet architecture requires an up-to-date runtime. Verify you have llama.cpp built after April 2026 and mlx-lm ≥ 0.22. Older builds may fail to load the model.
 
 ### Inference Parameters
 
@@ -92,7 +98,8 @@ repeat_penalty     = 1.0
 #### Download GGUF
 
 ```bash
-uv pip install huggingface_hub
+# one-time — adds huggingface-cli to your PATH
+uv tool install huggingface_hub
 
 # Q4 (recommended, 16-17 GB)
 huggingface-cli download unsloth/Qwen3.6-27B-GGUF \
@@ -182,6 +189,7 @@ vllm serve Qwen/Qwen3.6-27B \
 
 ```bash
 # Via mlx-lm
+uv venv .venv && source .venv/bin/activate
 uv pip install mlx-lm
 
 mlx_lm.generate \
@@ -214,13 +222,23 @@ print(response.choices[0].message.content)
 
 ### Benchmarks
 
-Qwen3.6-27B surpasses Qwen3.5-397B-A17B (397B total / 17B active MoE) across all major coding benchmarks. Key claims from the release:
+Qwen3.6-27B vs Qwen3.5-27B head-to-head (same hardware target, from the official model card):
 
-- **SWE-bench Verified** — flagship-level performance at 27B dense scale
-- **Terminal-Bench 2.0** — strong agentic terminal task completion
-- **LiveCodeBench** — competitive with much larger models
+| Benchmark | Qwen3.5-27B | Qwen3.6-27B | Delta |
+|-----------|-------------|-------------|-------|
+| SWE-bench Verified | 75.0 | **77.2** | +2.2 |
+| SWE-bench Pro | 51.2 | **53.5** | +2.3 |
+| Terminal-Bench 2.0 | 41.6 | **59.3** | +17.7 |
+| SkillsBench Avg5 | 27.2 | **48.2** | +21.0 |
+| QwenWebBench | 1068 Elo | **1487 Elo** | +419 |
+| LiveCodeBench v6 | 80.7 | **83.9** | +3.2 |
+| GPQA Diamond | 85.5 | **87.8** | +2.3 |
 
-> The comparison is striking: 807 GB (Qwen3.5-397B-A17B) vs 55.6 GB BF16 (Qwen3.6-27B), with the smaller model winning on every coding metric. See the [official blog post](https://qwen.ai/blog/qwen3.6-27b) for full benchmark tables.
+Qwen3.6-27B also beats Qwen3.5-397B-A17B (807 GB BF16) on SWE-bench Pro — a 27B dense model edging out a 397B MoE on the hardest agentic coding benchmark.
+
+> **Latency caveat:** The gains come at a cost. Qwen3.6 generates longer thinking traces than Qwen3.5, which increases response latency for interactive use. For latency-sensitive workflows, use `enable_thinking: false` or fall back to Qwen3.5-27B.
+
+Source: [official HF model card](https://huggingface.co/Qwen/Qwen3.6-27B) · [Qwen blog](https://qwen.ai/blog/qwen3.6-27b).
 
 ---
 
@@ -350,7 +368,8 @@ print(response.choices[0].message.content)
 #### Download GGUF
 
 ```bash
-uv pip install huggingface_hub hf_transfer
+# one-time — adds huggingface-cli and hf to your PATH
+uv tool install "huggingface_hub[hf_transfer]"
 
 # 4-bit + vision projector
 hf download unsloth/Qwen3.6-35B-A3B-GGUF \

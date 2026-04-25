@@ -4,6 +4,8 @@ Released February 2026 by Alibaba/Qwen team. Apache 2.0 license.
 
 Qwen3.5 is a native multimodal (text + vision) family with hybrid thinking (reasoning on/off), 262K native context, and four sizes for different hardware targets.
 
+> **Qwen3.6 is out (April 2026).** For most workloads — especially coding and agentic tasks — [Qwen3.6-27B](qwen3.6.md) is the better choice at the same VRAM footprint. The 27B dense model outperforms Qwen3.5-397B-A17B on every major coding benchmark. Qwen3.5 remains a valid fallback if you need the fastest possible interactive latency without thinking, or if your llama.cpp/MLX build predates Gated DeltaNet support.
+
 ---
 
 ## Model Lineup
@@ -93,7 +95,8 @@ presence_penalty = 1.5
 ## Downloading GGUF Models
 
 ```bash
-uv pip install huggingface_hub hf_transfer
+# one-time — adds huggingface-cli and hf to your PATH
+uv tool install "huggingface_hub[hf_transfer]"
 
 # 27B — 4-bit (recommended for 16 GB VRAM)
 hf download unsloth/Qwen3.5-27B-Instruct-GGUF \

@@ -132,7 +132,8 @@ You are a helpful assistant.
 ### Download GGUF
 
 ```bash
-uv pip install huggingface_hub hf_transfer
+# one-time — adds huggingface-cli and hf to your PATH
+uv tool install "huggingface_hub[hf_transfer]"
 
 # E4B — 8-bit (best quality for small model)
 hf download unsloth/gemma-4-E4B-it-GGUF \
