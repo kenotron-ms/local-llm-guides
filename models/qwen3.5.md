@@ -134,6 +134,7 @@ export LLAMA_CACHE="./models"
 
 ## Quick Run Examples
 
+<!-- when:backend=llamacpp -->
 ### llama.cpp CLI (thinking mode)
 
 ```bash
@@ -174,6 +175,9 @@ export LLAMA_CACHE="./models"
   --top-k 20
 ```
 
+<!-- /when -->
+
+<!-- when:backend=ollama -->
 ### Ollama
 
 ```bash
@@ -182,6 +186,9 @@ ollama pull qwen3.5:35b-a3b
 ollama run qwen3.5:27b
 ```
 
+<!-- /when -->
+
+<!-- when:backend=vllm,platform=linux -->
 ### vLLM (BF16, single A100/H100 for 35B-A3B)
 
 ```bash
@@ -202,6 +209,8 @@ vllm serve Qwen/Qwen3.5-122B-A10B-Instruct \
 ```
 
 ---
+
+<!-- /when -->
 
 ## Vision Usage (Multimodal)
 

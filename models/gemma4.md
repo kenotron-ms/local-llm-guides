@@ -153,6 +153,7 @@ hf download unsloth/gemma-4-31B-it-GGUF \
   --include "*UD-Q4_K_XL*"
 ```
 
+<!-- when:backend=llamacpp -->
 ### llama.cpp CLI
 
 ```bash
@@ -197,6 +198,9 @@ export LLAMA_CACHE="./models"
   --chat-template-kwargs '{"enable_thinking":true}'
 ```
 
+<!-- /when -->
+
+<!-- when:backend=ollama -->
 ### Ollama
 
 ```bash
@@ -210,6 +214,9 @@ ollama pull gemma4:31b
 ollama run gemma4:26b
 ```
 
+<!-- /when -->
+
+<!-- when:backend=vllm,platform=linux -->
 ### vLLM (NVIDIA CUDA)
 
 ```bash
@@ -229,6 +236,9 @@ vllm serve google/gemma-4-31B-it \
   --gpu-memory-utilization 0.90
 ```
 
+<!-- /when -->
+
+<!-- when:backend=mlx,platform=mac -->
 ### Apple Silicon (MLX)
 
 ```bash
@@ -252,6 +262,8 @@ MLX available variants:
 | E2B | `unsloth/gemma-4-e2b-it-UD-MLX-4bit` | `unsloth/gemma-4-e2b-it-UD-MLX-8bit` |
 
 ---
+
+<!-- /when -->
 
 ## Multimodal Usage
 

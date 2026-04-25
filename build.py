@@ -59,6 +59,44 @@ PICKER_HTML_OS = (
     '</div>'
 )
 
+_PILLS_PLATFORM = (
+    '<button class="picker-pill" data-dim="platform" data-val="mac">macOS</button>'
+    '<button class="picker-pill" data-dim="platform" data-val="linux">Linux</button>'
+    '<button class="picker-pill" data-dim="platform" data-val="windows">Windows</button>'
+)
+_PILLS_BACKEND = (
+    '<button class="picker-pill" data-dim="backend" data-val="ollama">Ollama</button>'
+    '<button class="picker-pill" data-dim="backend" data-val="llamacpp">llama.cpp</button>'
+    '<button class="picker-pill" data-dim="backend" data-val="vllm">vLLM</button>'
+    '<button class="picker-pill" data-dim="backend" data-val="lmstudio">LM Studio</button>'
+    '<button class="picker-pill" data-dim="backend" data-val="mlx">MLX</button>'
+)
+
+def build_model_picker(models: list) -> str:
+    """Build picker HTML for model pages: Platform + Backend + optional per-page Model pills."""
+    SEP = '<span class="picker-group-sep">&middot;</span>'
+    def group(name, pills):
+        return (
+            f'<div class="picker-group">'
+            f'<span class="picker-group-name">{name}</span>'
+            f'<div class="picker-pills">{pills}</div></div>'
+        )
+    html = (
+        '<div class="path-picker" id="path-picker">'
+        '<span class="picker-label">Showing for</span>'
+        + group("Platform", _PILLS_PLATFORM)
+        + SEP
+        + group("Backend", _PILLS_BACKEND)
+    )
+    if models:
+        pills_model = ''.join(
+            '<button class="picker-pill" data-dim="model" data-val="' + v + '">' + label + '</button>'
+            for v, label in models
+        )
+        html += SEP + group("Model", pills_model)
+    html += '</div>'
+    return html
+
 def is_guide_page(slug: str) -> bool:
     return slug == "agent-integration" or slug.startswith("backends/")
 
@@ -74,9 +112,13 @@ NAV = [
     {
         "section": "Models",
         "items": [
-            {"title": "Gemma 4", "file": "models/gemma4.md",  "slug": "models/gemma4"},
-            {"title": "Qwen 3.5", "file": "models/qwen3.5.md", "slug": "models/qwen3.5"},
-            {"title": "Qwen 3.6", "file": "models/qwen3.6.md", "slug": "models/qwen3.6"},
+            {"title": "Quant & Variants", "file": "models/quantization.md", "slug": "models/quantization"},
+            {"title": "Gemma 4",  "file": "models/gemma4.md",  "slug": "models/gemma4",
+             "models": [("e4b", "E4B"), ("e2b", "E2B"), ("26b-a4b", "26B-A4B"), ("31b", "31B")]},
+            {"title": "Qwen 3.5", "file": "models/qwen3.5.md", "slug": "models/qwen3.5",
+             "models": [("27b", "27B"), ("35b-a3b", "35B-A3B"), ("122b", "122B")]},
+            {"title": "Qwen 3.6", "file": "models/qwen3.6.md", "slug": "models/qwen3.6",
+             "models": [("27b", "27B"), ("35b-a3b", "35B-A3B")]},
         ],
     },
     {
@@ -895,8 +937,11 @@ def render_page(page: dict, content_html: str, toc_tokens, search_index: list) -
     search_json  = json.dumps(search_index, ensure_ascii=False)
     if slug == "agent-integration":
         path_picker_html = PICKER_HTML
-    elif slug.startswith("backends/"):
+    elif slug.startswith("backends/") or slug.startswith("hardware/"):
         path_picker_html = PICKER_HTML_OS
+    elif slug.startswith("models/"):
+        page_models = PAGE_BY_SLUG.get(slug, {}).get("models", [])
+        path_picker_html = build_model_picker(page_models)
     else:
         path_picker_html = ""
     js_code      = JS_TEMPLATE.replace("__SEARCH_INDEX__", search_json)

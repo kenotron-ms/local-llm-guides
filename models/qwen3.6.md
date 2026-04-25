@@ -20,6 +20,7 @@ Both models support 201 languages, hybrid thinking (on/off per request), and too
 
 ---
 
+<!-- when:model=27b -->
 ## Qwen3.6-27B (Dense)
 
 The 27B dense is the standout drop. A 55.6 GB BF16 model that outperforms the 807 GB Qwen3.5-397B-A17B MoE across all major coding benchmarks — and fits in Q4 on a single RTX 4080 (16 GB VRAM).
@@ -112,6 +113,7 @@ huggingface-cli download unsloth/Qwen3.6-27B-GGUF \
   --local-dir ./models/qwen3.6-27b
 ```
 
+<!-- when:backend=llamacpp -->
 #### llama-server (stream from HF, no pre-download)
 
 ```bash
@@ -154,6 +156,9 @@ llama-server \
 
 > **Windows PowerShell** — escape inner quotes: `--chat-template-kwargs '{\"enable_thinking\":true}'`
 
+<!-- /when -->
+
+<!-- when:backend=ollama -->
 #### Ollama
 
 ```bash
@@ -161,6 +166,9 @@ ollama pull qwen3.6:27b
 ollama run qwen3.6:27b
 ```
 
+<!-- /when -->
+
+<!-- when:backend=vllm,platform=linux -->
 #### vLLM (single A100 80G / H100 / MI300X)
 
 ```bash
@@ -185,6 +193,9 @@ vllm serve Qwen/Qwen3.6-27B \
   --tool-call-parser qwen3_coder
 ```
 
+<!-- /when -->
+
+<!-- when:backend=mlx,platform=mac -->
 #### Apple Silicon (MLX)
 
 ```bash
@@ -199,6 +210,8 @@ mlx_lm.generate \
 ```
 
 > `mlx-community/Qwen3.6-27B-4bit` will appear on HuggingFace within hours of the release. Check `mlx-community` org for available quantizations.
+
+<!-- /when -->
 
 ### OpenAI API Usage
 
@@ -242,6 +255,9 @@ Source: [official HF model card](https://huggingface.co/Qwen/Qwen3.6-27B) · [Qw
 
 ---
 
+<!-- /when -->
+
+<!-- when:model=35b-a3b -->
 ## Qwen3.6-35B-A3B (MoE)
 
 **Recommended GGUF** (Unsloth Dynamic 2.0, higher quality than standard quants):
@@ -383,6 +399,7 @@ hf download unsloth/Qwen3.6-35B-A3B-GGUF \
   --include "*UD-Q2_K_XL*"
 ```
 
+<!-- when:backend=llamacpp -->
 #### llama.cpp CLI (stream from HF, no pre-download)
 
 ```bash
@@ -440,6 +457,9 @@ export LLAMA_CACHE="./models"
   --chat-template-kwargs '{"enable_thinking":true}'
 ```
 
+<!-- /when -->
+
+<!-- when:backend=ollama -->
 #### Ollama
 
 ```bash
@@ -447,6 +467,9 @@ ollama pull qwen3.6:35b-a3b
 ollama run qwen3.6:35b-a3b
 ```
 
+<!-- /when -->
+
+<!-- when:backend=vllm,platform=linux -->
 #### vLLM (single A100/H100 or MI300X)
 
 ```bash
@@ -471,6 +494,9 @@ vllm serve Qwen/Qwen3.6-35B-A3B \
   --tool-call-parser qwen3_coder
 ```
 
+<!-- /when -->
+
+<!-- when:backend=mlx,platform=mac -->
 #### Apple Silicon (MLX)
 
 ```bash
@@ -480,6 +506,8 @@ python -m mlx_vlm.chat \
   --model unsloth/Qwen3.6-35B-A3B-UD-MLX-4bit \
   --chat-template-kwargs '{"enable_thinking":true}'
 ```
+
+<!-- /when -->
 
 ### OpenAI API Usage
 
@@ -561,3 +589,4 @@ model = AutoModelForCausalLM.from_pretrained(
 | LiveCodeBench | Top tier at MoE scale |
 
 Source: [Qwen3.6 release blog](https://www.alibabacloud.com/blog/qwen3-6-35b-a3b-agentic-coding-power-now-open-to-all_603043)
+<!-- /when -->
