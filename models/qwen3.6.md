@@ -589,4 +589,53 @@ model = AutoModelForCausalLM.from_pretrained(
 | LiveCodeBench | Top tier at MoE scale |
 
 Source: [Qwen3.6 release blog](https://www.alibabacloud.com/blog/qwen3-6-35b-a3b-agentic-coding-power-now-open-to-all_603043)
+
+    ---
+
+    ## Known Issues
+
+    ### `unknown model architecture: 'qwen35'` (llama.cpp)
+
+    ```
+    llama_model_load: error loading model: error loading model architecture: 'qwen35'
+    ```
+
+    **Cause:** Your llama.cpp binary is older than build b8233. The `qwen35` architecture (Hybrid Gated DeltaNet) was added in [PR #19468](https://github.com/ggml-org/llama.cpp/pull/19468), with the dense 27B variant specifically requiring **b8233 or later** (March 7, 2026).
+
+    **Fix:** Update llama.cpp.
+
+    ```bash
+    # From source
+    cd llama.cpp
+    git pull
+    cmake -B build -DGGML_METAL=ON   # or -DGGML_CUDA=ON on Linux
+    cmake --build build --config Release -j$(nproc)
+
+    # macOS Homebrew
+    brew upgrade llama.cpp
+
+    # Or download a prebuilt binary ≥ b8233 from:
+    # https://github.com/ggml-org/llama.cpp/releases
+    ```
+
+    ---
+
+    ### Ollama: HF GGUFs fail to load (even on Ollama 0.17.1+)
+
+    Ollama 0.17.1 added `qwen35` arch support, but HF-sourced GGUFs (unsloth, bartowski) do not load because the KV metadata encodes `attention.head_count_kv` as a **scalar**, while Ollama expects an **array**. Track fix at [ollama#14503](https://github.com/ollama/ollama/issues/14503).
+
+    **Workaround:** Use Ollama-native weights instead of HF GGUFs:
+
+    ```bash
+    ollama run qwen3.6:27b
+    ollama run qwen3.6:35b-a3b
+    ```
+
+    ---
+
+    ### Vulkan backend: SSM layers fall back to CPU
+
+    The `ggml_ssm_conv` and `ggml_ssm_scan` operations required by the DeltaNet layers are not yet implemented as Vulkan shaders. If you're on a GPU with only Vulkan support (no CUDA, no Metal), the SSM layers will run on CPU. CUDA and Metal are fully accelerated. Track at [llama.cpp#19957](https://github.com/ggml-org/llama.cpp/issues/19957).
+
+    
 <!-- /when -->
